@@ -830,6 +830,14 @@ fn convert_wgsl() {
             Targets::SPIRV | Targets::HLSL | Targets::WGSL | Targets::METAL,
         ),
         (
+            "overrides",
+            Targets::IR | Targets::ANALYSIS, // | Targets::SPIRV
+                                             // | Targets::METAL
+                                             // | Targets::GLSL
+                                             // | Targets::HLSL
+                                             // | Targets::WGSL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
         )

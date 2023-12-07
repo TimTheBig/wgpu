@@ -190,7 +190,7 @@ pub enum Error<'a> {
         expected: String,
         got: String,
     },
-    MissingType(Span),
+    DeclMissingTypeAndInit(Span),
     MissingAttribute(&'static str, Span),
     InvalidAtomicPointer(Span),
     InvalidAtomicOperandType(Span),
@@ -273,6 +273,7 @@ pub enum Error<'a> {
         span: Span,
         limit: u8,
     },
+    PipelineConstantIDValue(Span),
     /// String literals are only used with debugPrintf
     UnexpectedStringLiteral(Span),
 }
@@ -525,11 +526,11 @@ impl<'a> Error<'a> {
                     notes: vec![],
                 }
             }
-            Error::MissingType(name_span) => ParseError {
-                message: format!("variable `{}` needs a type", &source[name_span]),
+            Error::DeclMissingTypeAndInit(name_span) => ParseError {
+                message: format!("declaration of `{}` needs a type specifier or initializer", &source[name_span]),
                 labels: vec![(
                     name_span,
-                    format!("definition of `{}`", &source[name_span]).into(),
+                    "needs a type specifier or initializer".into(),
                 )],
                 notes: vec![],
             },
@@ -784,6 +785,14 @@ impl<'a> Error<'a> {
                     format!("nesting limit is currently set to {limit}"),
                 ],
             },
+            Error::PipelineConstantIDValue(span) => ParseError {
+                message: "pipeline constant ID must be between 0 and 65535 inclusive".to_string(),
+                labels: vec![(
+                    span,
+                    "must be between 0 and 65535 inclusive".into(),
+                )],
+                notes: vec![],
+            },
             Error::UnexpectedStringLiteral(span) => ParseError {
                 message: "unexpected string literal".to_string(),
                 labels: vec![(
@@ -791,7 +800,7 @@ impl<'a> Error<'a> {
                     "string literals can only be used as the first argument to debugPrintf".into(),
                 )],
                 notes: vec![],
-            },
+            }
         }
     }
 }

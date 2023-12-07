@@ -2184,6 +2184,7 @@ impl Parser {
         let mut early_depth_test = ParsedAttribute::default();
         let (mut bind_index, mut bind_group) =
             (ParsedAttribute::default(), ParsedAttribute::default());
+        let mut id = ParsedAttribute::default();
 
         let mut dependencies = FastIndexSet::default();
         let mut ctx = ExpressionContext {
@@ -2205,6 +2206,11 @@ impl Parser {
                 ("group", name_span) => {
                     lexer.expect(Token::Paren('('))?;
                     bind_group.set(self.general_expression(lexer, &mut ctx)?, name_span)?;
+                    lexer.expect(Token::Paren(')'))?;
+                }
+                ("id", name_span) => {
+                    lexer.expect(Token::Paren('('))?;
+                    id.set(self.general_expression(lexer, &mut ctx)?, name_span)?;
                     lexer.expect(Token::Paren(')'))?;
                 }
                 ("vertex", name_span) => {
@@ -2296,6 +2302,30 @@ impl Parser {
                 lexer.expect(Token::Separator(';'))?;
 
                 Some(ast::GlobalDeclKind::Const(ast::Const { name, ty, init }))
+            }
+            (Token::Word("override"), _) => {
+                let name = lexer.next_ident()?;
+
+                let ty = if lexer.skip(Token::Separator(':')) {
+                    Some(self.type_decl(lexer, &mut ctx)?)
+                } else {
+                    None
+                };
+
+                let init = if lexer.skip(Token::Operation('=')) {
+                    Some(self.general_expression(lexer, &mut ctx)?)
+                } else {
+                    None
+                };
+
+                lexer.expect(Token::Separator(';'))?;
+
+                Some(ast::GlobalDeclKind::Override(ast::Override {
+                    name,
+                    id: id.value,
+                    ty,
+                    init,
+                }))
             }
             (Token::Word("var"), _) => {
                 let mut var = self.variable_decl(lexer, &mut ctx)?;
