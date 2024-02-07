@@ -904,10 +904,11 @@ fn convert_wgsl() {
             "overrides-ray-query",
             Targets::IR | Targets::SPIRV | Targets::METAL,
         ),
+        ("vertex-pulling-transform", Targets::METAL),
         (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
-        )
+        ),
     ];
 
     for &(name, targets) in inputs.iter() {
