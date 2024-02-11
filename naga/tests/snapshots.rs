@@ -905,6 +905,11 @@ fn convert_spv_all() {
         Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
     );
     convert_spv(
+        "unnamed-gl-per-vertex",
+        true,
+        Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
+    );
+    convert_spv(
         "debug-printf-s",
         false,
         Targets::GLSL | Targets::WGSL | Targets::HLSL,
