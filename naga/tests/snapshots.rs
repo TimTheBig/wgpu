@@ -914,6 +914,7 @@ fn convert_spv_all() {
         false,
         Targets::GLSL | Targets::WGSL | Targets::HLSL,
     );
+    convert_spv("builtin-accessed-outside-entrypoint", true, Targets::WGSL);
 }
 
 #[cfg(feature = "glsl-in")]
