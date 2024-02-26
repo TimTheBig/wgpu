@@ -3133,6 +3133,8 @@ impl<A: HalApi> Device<A> {
                 return Err(DeviceError::WrongDevice.into());
             }
 
+            let stage_err = |error| pipeline::CreateRenderPipelineError::Stage { stage, error };
+
             if let Some(ref interface) = vertex_shader_module.interface {
                 io = interface
                     .check_stage(
@@ -3143,7 +3145,7 @@ impl<A: HalApi> Device<A> {
                         io,
                         desc.depth_stencil.as_ref().map(|d| d.depth_compare),
                     )
-                    .map_err(|error| pipeline::CreateRenderPipelineError::Stage { stage, error })?;
+                    .map_err(stage_err)?;
                 validated_stages |= stage;
             }
 
@@ -3167,6 +3169,8 @@ impl<A: HalApi> Device<A> {
                         })?,
                 );
 
+                let stage_err = |error| pipeline::CreateRenderPipelineError::Stage { stage, error };
+
                 if validated_stages == wgt::ShaderStages::VERTEX {
                     if let Some(ref interface) = shader_module.interface {
                         io = interface
@@ -3178,10 +3182,7 @@ impl<A: HalApi> Device<A> {
                                 io,
                                 desc.depth_stencil.as_ref().map(|d| d.depth_compare),
                             )
-                            .map_err(|error| pipeline::CreateRenderPipelineError::Stage {
-                                stage,
-                                error,
-                            })?;
+                            .map_err(stage_err)?;
                         validated_stages |= stage;
                     }
                 }
