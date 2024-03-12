@@ -371,7 +371,7 @@ bitflags::bitflags! {
 
         /// Allows shaders to acquire the FP16 ability
         ///
-        /// Note: this is not supported in `naga` yet，only through `spirv-passthrough` right now.
+        /// Note: this is not supported in `naga` yet, only through `spirv-passthrough` right now.
         ///
         /// Supported Platforms:
         /// - Vulkan
@@ -875,6 +875,16 @@ bitflags::bitflags! {
         /// - DX12
         const DUAL_SOURCE_BLENDING = 1 << 54;
 
+        /// Allows shaders to use i64 and u64.
+        ///
+        /// Supported platforms:
+        /// - Vulkan
+        /// - DX12 (DXC only)
+        /// - Metal (with MSL 2.3+)
+        ///
+        /// This is a native only feature.
+        const SHADER_INT64 = 1 << 55;
+
         /// Enables support for debugPrintf in WGSL shaders.
         ///
         /// Supported Platforms:
@@ -884,7 +894,7 @@ bitflags::bitflags! {
         /// - OpenGL
         ///
         /// This is a native only feature
-        const DEBUG_PRINTF = 1 << 55;
+        const DEBUG_PRINTF = 1 << 56;
     }
 }
 

@@ -822,9 +822,13 @@ fn convert_wgsl() {
             Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::WGSL,
         ),
         (
+            "int64",
+            Targets::SPIRV | Targets::HLSL | Targets::WGSL | Targets::METAL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
-        ),
+        )
     ];
 
     for &(name, targets) in inputs.iter() {
