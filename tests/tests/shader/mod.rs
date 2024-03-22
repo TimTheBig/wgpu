@@ -17,6 +17,7 @@ use wgpu_test::TestingContext;
 
 pub mod debug_printf;
 pub mod compilation_messages;
+pub mod data_builtins;
 pub mod numeric_builtins;
 pub mod struct_layout;
 pub mod zero_init_workgroup_mem;
