@@ -474,6 +474,7 @@ fn write_output_spv(
             );
         }
     } else {
+        assert!(pipeline_constants.is_empty());
         write_output_spv_inner(input, module, info, &options, None, "spvasm");
     }
 }
@@ -872,9 +873,13 @@ fn convert_wgsl() {
             Targets::IR | Targets::SPIRV,
         ),
         (
+            "overrides-ray-query",
+            Targets::IR | Targets::SPIRV | Targets::METAL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
-        ),
+        )
     ];
 
     for &(name, targets) in inputs.iter() {
