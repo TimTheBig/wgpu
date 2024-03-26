@@ -868,9 +868,13 @@ fn convert_wgsl() {
             Targets::IR | Targets::ANALYSIS | Targets::SPIRV | Targets::METAL | Targets::HLSL,
         ),
         (
+            "overrides-atomicCompareExchangeWeak",
+            Targets::IR | Targets::SPIRV,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
-        )
+        ),
     ];
 
     for &(name, targets) in inputs.iter() {
