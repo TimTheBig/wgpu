@@ -269,6 +269,10 @@ pub enum Error<'a> {
         scalar: String,
         inner: ConstantEvaluatorError,
     },
+    ExceededLimitForNestedBraces {
+        span: Span,
+        limit: u8,
+    },
     /// String literals are only used with debugPrintf
     UnexpectedStringLiteral(Span),
 }
@@ -772,6 +776,13 @@ impl<'a> Error<'a> {
                 notes: vec![
                     format!("the expression should have been converted to have {} scalar type", scalar),
                 ]
+            },
+            Error::ExceededLimitForNestedBraces { span, limit } => ParseError {
+                message: "brace nesting limit reached".into(),
+                labels: vec![(span, "limit reached at this brace".into())],
+                notes: vec![
+                    format!("nesting limit is currently set to {limit}"),
+                ],
             },
             Error::UnexpectedStringLiteral(span) => ParseError {
                 message: "unexpected string literal".to_string(),

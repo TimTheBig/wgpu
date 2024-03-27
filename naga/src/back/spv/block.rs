@@ -1147,7 +1147,7 @@ impl<'w> BlockContext<'w> {
                         let offset_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
                             self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin,
+                            spirv::GLOp::UMin as u32,
                             u32_type,
                             offset_id,
                             &[arg2_id, width_constant],
