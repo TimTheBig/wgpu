@@ -1629,7 +1629,6 @@ impl Parser {
             (Token::Separator(';'), _) => {
                 let _ = lexer.next();
                 self.pop_rule_span(lexer);
-                return Ok(());
             }
             (Token::Paren('{'), _) => {
                 let (inner, span) = self.block(lexer, ctx)?;
@@ -1638,7 +1637,6 @@ impl Parser {
                     span,
                 });
                 self.pop_rule_span(lexer);
-                return Ok(());
             }
             (Token::Word(word), _) => {
                 let kind = match word {
