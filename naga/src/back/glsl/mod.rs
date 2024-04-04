@@ -296,8 +296,6 @@ pub struct PipelineOptions {
     pub entry_point: String,
     /// How many views to render to, if doing multiview rendering.
     pub multiview: Option<std::num::NonZeroU32>,
-    /// Pipeline constants.
-    pub constants: back::PipelineConstants,
 }
 
 #[derive(Debug)]
@@ -501,6 +499,8 @@ pub enum Error {
     ImageMultipleSamplers,
     #[error("{0}")]
     Custom(String),
+    #[error("overrides should not be present at this stage")]
+    Override,
 }
 
 /// Binary operation with a different logic on the GLSL side.
@@ -570,9 +570,7 @@ impl<'a, W: Write> Writer<'a, W> {
         policies: proc::BoundsCheckPolicies,
     ) -> Result<Self, Error> {
         if !module.overrides.is_empty() {
-            return Err(Error::Custom(
-                "Pipeline constants are not yet supported for this back-end".to_string(),
-            ));
+            return Err(Error::Override);
         }
 
         // Check if the requested version is supported
@@ -2561,7 +2559,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     |writer, expr| writer.write_expr(expr, ctx),
                 )?;
             }
-            Expression::Override(_) => return Err(Error::Custom("overrides are WIP".into())),
+            Expression::Override(_) => return Err(Error::Override),
             // `Access` is applied to arrays, vectors and matrices and is written as indexing
             Expression::Access { base, index } => {
                 self.write_expr(base, ctx)?;
