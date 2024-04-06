@@ -1069,12 +1069,7 @@ impl crate::Device for super::Device {
             },
             bind_group_infos,
             naga_options: hlsl::Options {
-                shader_model: match self.dxc_container {
-                    // DXC
-                    Some(_) => hlsl::ShaderModel::V6_0,
-                    // FXC doesn't support SM 6.0
-                    None => hlsl::ShaderModel::V5_1,
-                },
+                shader_model: self.private_caps.shader_model,
                 flags: match self.dxc_container {
                     // DXC doesn't support printf: https://github.com/microsoft/DirectXShaderCompiler/issues/357
                     Some(_) => hlsl::WriterFlags::empty(),
