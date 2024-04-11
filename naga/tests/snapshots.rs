@@ -979,6 +979,7 @@ fn convert_spv_all() {
         Targets::GLSL | Targets::WGSL | Targets::HLSL,
     );
     convert_spv("builtin-accessed-outside-entrypoint", true, Targets::WGSL);
+    convert_spv("spec-constants", true, Targets::IR);
 }
 
 #[cfg(feature = "glsl-in")]
