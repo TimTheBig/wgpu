@@ -1033,7 +1033,7 @@ impl<'w> BlockContext<'w> {
                                 spirv::GLOp::FindILsb
                             } else {
                                 spirv::GLOp::FindUMsb
-                            },
+                            } as u32,
                             int_type_id,
                             msb_id,
                             &[arg0_id],
@@ -1092,7 +1092,7 @@ impl<'w> BlockContext<'w> {
                         let offset_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
                             self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin,
+                            spirv::GLOp::UMin as u32,
                             u32_type,
                             offset_id,
                             &[arg1_id, width_constant],
@@ -1112,7 +1112,7 @@ impl<'w> BlockContext<'w> {
                         let count_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
                             self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin,
+                            spirv::GLOp::UMin as u32,
                             u32_type,
                             count_id,
                             &[arg2_id, max_count_id],
@@ -1280,7 +1280,9 @@ impl<'w> BlockContext<'w> {
             crate::Expression::CallResult(_)
             | crate::Expression::AtomicResult { .. }
             | crate::Expression::WorkGroupUniformLoadResult { .. }
-            | crate::Expression::RayQueryProceedResult => self.cached[expr_handle],
+            | crate::Expression::RayQueryProceedResult
+            | crate::Expression::SubgroupBallotResult
+            | crate::Expression::SubgroupOperationResult { .. } => self.cached[expr_handle],
             crate::Expression::As {
                 expr,
                 kind,
@@ -2518,6 +2520,27 @@ impl<'w> BlockContext<'w> {
                             &self.temp_list,
                         ));
                     }
+                }
+                crate::Statement::SubgroupBallot {
+                    result,
+                    ref predicate,
+                } => {
+                    self.write_subgroup_ballot(predicate, result, &mut block)?;
+                }
+                crate::Statement::SubgroupCollectiveOperation {
+                    ref op,
+                    ref collective_op,
+                    argument,
+                    result,
+                } => {
+                    self.write_subgroup_operation(op, collective_op, argument, result, &mut block)?;
+                }
+                crate::Statement::SubgroupGather {
+                    ref mode,
+                    argument,
+                    result,
+                } => {
+                    self.write_subgroup_gather(mode, argument, result, &mut block)?;
                 }
             }
         }
