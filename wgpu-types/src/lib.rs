@@ -917,6 +917,16 @@ bitflags::bitflags! {
         /// This is a native only feature.
         const SUBGROUP_BARRIER = 1 << 58;
 
+        /// Allows the use of pipeline cache objects
+        ///
+        /// Supported platforms:
+        /// - Vulkan
+        ///
+        /// Unimplemented Platforms:
+        /// - DX12
+        /// - Metal
+        const PIPELINE_CACHE = 1 << 59;
+
         /// Enables support for debugPrintf in WGSL shaders.
         ///
         /// Supported Platforms:
@@ -926,7 +936,7 @@ bitflags::bitflags! {
         /// - OpenGL
         ///
         /// This is a native only feature
-        const DEBUG_PRINTF = 1 << 59;
+        const DEBUG_PRINTF = 1 << 60;
     }
 }
 
