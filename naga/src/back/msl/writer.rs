@@ -3956,8 +3956,8 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::float2((float(b0) - 128.0f) / 255.0f, \
-                                            (float(b1) - 128.0f) / 255.0f);",
+                    "{}return metal::float2(metal::max(-1.0f, as_type<char>(b0) / 127.0f), \
+                                            metal::max(-1.0f, as_type<char>(b1) / 127.0f));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -3974,10 +3974,10 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::float4((float(b0) - 128.0f) / 255.0f, \
-                                            (float(b1) - 128.0f) / 255.0f, \
-                                            (float(b2) - 128.0f) / 255.0f, \
-                                            (float(b3) - 128.0f) / 255.0f);",
+                    "{}return metal::float4(metal::max(-1.0f, as_type<char>(b0) / 127.0f), \
+                                            metal::max(-1.0f, as_type<char>(b1) / 127.0f), \
+                                            metal::max(-1.0f, as_type<char>(b2) / 127.0f), \
+                                            metal::max(-1.0f, as_type<char>(b3) / 127.0f));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4036,8 +4036,8 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::int2(as_type<metal::short>(b1 << 8 | b0), \
-                                          as_type<metal::short>(b3 << 8 | b2));",
+                    "{}return metal::int2(as_type<short>(metal::ushort(b1 << 8 | b0)), \
+                                          as_type<short>(metal::ushort(b3 << 8 | b2)));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4058,10 +4058,10 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::int4(as_type<metal::short>(b1 << 8 | b0), \
-                                          as_type<metal::short>(b3 << 8 | b2), \
-                                          as_type<metal::short>(b5 << 8 | b4), \
-                                          as_type<metal::short>(b7 << 8 | b6));",
+                    "{}return metal::int4(as_type<short>(metal::ushort(b1 << 8 | b0)), \
+                                          as_type<short>(metal::ushort(b3 << 8 | b2)), \
+                                          as_type<short>(metal::ushort(b5 << 8 | b4)), \
+                                          as_type<short>(metal::ushort(b7 << 8 | b6)));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4120,8 +4120,7 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::float2((float(b1 << 8 | b0) - 32767.0f) / 65535.0f, \
-                                            (float(b3 << 8 | b2) - 32767.0f) / 65535.0f);",
+                    "{}return metal::unpack_snorm2x16_to_float(b1 << 24 | b0 << 16 | b3 << 8 | b2);",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4142,10 +4141,8 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::float4((float(b1 << 8 | b0) - 32767.0f) / 65535.0f, \
-                                            (float(b3 << 8 | b2) - 32767.0f) / 65535.0f, \
-                                            (float(b5 << 8 | b4) - 32767.0f) / 65535.0f, \
-                                            (float(b7 << 8 | b6) - 32767.0f) / 65535.0f);",
+                    "{}return metal::float4(metal::unpack_snorm2x16_to_float(b1 << 24 | b0 << 16 | b3 << 8 | b2), \
+                                            metal::unpack_snorm2x16_to_float(b5 << 24 | b4 << 16 | b7 << 8 | b6));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4162,8 +4159,8 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::float2(as_type<metal::half>(b1 << 8 | b0), \
-                                            as_type<metal::half>(b3 << 8 | b2));",
+                    "{}return metal::float2(as_type<half>(metal::ushort(b1 << 8 | b0)), \
+                                            as_type<half>(metal::ushort(b3 << 8 | b2)));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4173,7 +4170,7 @@ impl<W: Write> Writer<W> {
                 let name = self.namer.call("unpackFloat16x4");
                 writeln!(
                     self.out,
-                    "metal::int4 {name}(metal::ushort b0, \
+                    "metal::float4 {name}(metal::ushort b0, \
                                         metal::ushort b1, \
                                         metal::ushort b2, \
                                         metal::ushort b3, \
@@ -4184,10 +4181,10 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return metal::int4(as_type<metal::half>(b1 << 8 | b0), \
-                                          as_type<metal::half>(b3 << 8 | b2), \
-                                          as_type<metal::half>(b5 << 8 | b4), \
-                                          as_type<metal::half>(b7 << 8 | b6));",
+                    "{}return metal::float4(as_type<half>(metal::ushort(b1 << 8 | b0)), \
+                                          as_type<half>(metal::ushort(b3 << 8 | b2)), \
+                                          as_type<half>(metal::ushort(b5 << 8 | b4)), \
+                                          as_type<half>(metal::ushort(b7 << 8 | b6)));",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
@@ -4393,10 +4390,10 @@ impl<W: Write> Writer<W> {
                 let name = self.namer.call("unpackSint32");
                 writeln!(
                     self.out,
-                    "metal::int {name}(uint b0, \
-                                       uint b1, \
-                                       uint b2, \
-                                       uint b3) {{"
+                    "int {name}(uint b0, \
+                                uint b1, \
+                                uint b2, \
+                                uint b3) {{"
                 )?;
                 writeln!(
                     self.out,
@@ -4498,7 +4495,18 @@ impl<W: Write> Writer<W> {
                 )?;
                 writeln!(
                     self.out,
-                    "{}return unpack_unorm10a2_to_float(b3 << 24 | b2 << 16 | b1 << 8 | b0);",
+                    // The following is correct for RGBA packing, but our format seems to
+                    // match ABGR, which can be fed into the Metal builtin function
+                    // unpack_unorm10a2_to_float.
+                    /*
+                    "{}uint v = (b3 << 24 | b2 << 16 | b1 << 8 | b0); \
+                       uint r = (v & 0xFFC00000) >> 22; \
+                       uint g = (v & 0x003FF000) >> 12; \
+                       uint b = (v & 0x00000FFC) >> 2; \
+                       uint a = (v & 0x00000003); \
+                       return metal::float4(float(r) / 1023.0f, float(g) / 1023.0f, float(b) / 1023.0f, float(a) / 3.0f);",
+                    */
+                    "{}return metal::unpack_unorm10a2_to_float(b3 << 24 | b2 << 16 | b1 << 8 | b0);",
                     back::INDENT
                 )?;
                 writeln!(self.out, "}}")?;
