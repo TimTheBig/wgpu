@@ -1,5 +1,5 @@
-use crate::arena::Handle;
 use crate::arena::{Arena, UniqueArena};
+use crate::arena::{Handle, HandleSet};
 
 use super::validate_atomic_compare_exchange_struct;
 
@@ -9,8 +9,6 @@ use super::{
 };
 use crate::span::WithSpan;
 use crate::span::{AddSpan as _, MapErrWithSpan as _};
-
-use bit_set::BitSet;
 
 #[derive(Clone, Debug, thiserror::Error)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -262,9 +260,9 @@ impl<'a> BlockContext<'a> {
     fn resolve_type_impl(
         &self,
         handle: Handle<crate::Expression>,
-        valid_expressions: &BitSet,
+        valid_expressions: &HandleSet<crate::Expression>,
     ) -> Result<&crate::TypeInner, WithSpan<ExpressionError>> {
-        if !valid_expressions.contains(handle.index()) {
+        if !valid_expressions.contains(handle) {
             Err(ExpressionError::NotInScope.with_span_handle(handle, self.expressions))
         } else {
             Ok(self.info[handle].ty.inner_with(self.types))
@@ -274,7 +272,7 @@ impl<'a> BlockContext<'a> {
     fn resolve_type(
         &self,
         handle: Handle<crate::Expression>,
-        valid_expressions: &BitSet,
+        valid_expressions: &HandleSet<crate::Expression>,
     ) -> Result<&crate::TypeInner, WithSpan<FunctionError>> {
         self.resolve_type_impl(handle, valid_expressions)
             .map_err_inner(|source| FunctionError::Expression { handle, source }.with_span())
@@ -320,7 +318,7 @@ impl super::Validator {
         }
 
         if let Some(expr) = result {
-            if self.valid_expression_set.insert(expr.index()) {
+            if self.valid_expression_set.insert(expr) {
                 self.valid_expression_list.push(expr);
             } else {
                 return Err(CallError::ResultAlreadyInScope(expr)
@@ -353,7 +351,7 @@ impl super::Validator {
         handle: Handle<crate::Expression>,
         context: &BlockContext,
     ) -> Result<(), WithSpan<FunctionError>> {
-        if self.valid_expression_set.insert(handle.index()) {
+        if self.valid_expression_set.insert(handle) {
             self.valid_expression_list.push(handle);
             Ok(())
         } else {
@@ -869,7 +867,7 @@ impl super::Validator {
                     }
 
                     for handle in self.valid_expression_list.drain(base_expression_count..) {
-                        self.valid_expression_set.remove(handle.index());
+                        self.valid_expression_set.remove(handle);
                     }
                 }
                 S::Break => {
@@ -1345,7 +1343,7 @@ impl super::Validator {
         let base_expression_count = self.valid_expression_list.len();
         let info = self.validate_block_impl(statements, context)?;
         for handle in self.valid_expression_list.drain(base_expression_count..) {
-            self.valid_expression_set.remove(handle.index());
+            self.valid_expression_set.remove(handle);
         }
         Ok(info)
     }
@@ -1453,12 +1451,12 @@ impl super::Validator {
             }
         }
 
-        self.valid_expression_set.clear();
+        self.valid_expression_set.clear_for_arena(&fun.expressions);
         self.valid_expression_list.clear();
         self.needs_visit.clear();
         for (handle, expr) in fun.expressions.iter() {
             if expr.needs_pre_emit() {
-                self.valid_expression_set.insert(handle.index());
+                self.valid_expression_set.insert(handle);
             }
             if self.flags.contains(super::ValidationFlags::EXPRESSIONS) {
                 // Mark expressions that need to be visited by a particular kind of
