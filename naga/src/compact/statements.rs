@@ -109,9 +109,9 @@ impl FunctionTracer<'_> {
                     }
                     St::SubgroupBallot { result, predicate } => {
                         if let Some(predicate) = predicate {
-                            self.expressions_used.insert(predicate)
+                            self.expressions_used.insert(predicate);
                         }
-                        self.expressions_used.insert(result)
+                        self.expressions_used.insert(result);
                     }
                     St::SubgroupCollectiveOperation {
                         op: _,
@@ -120,7 +120,7 @@ impl FunctionTracer<'_> {
                         result,
                     } => {
                         self.expressions_used.insert(argument);
-                        self.expressions_used.insert(result)
+                        self.expressions_used.insert(result);
                     }
                     St::SubgroupGather {
                         mode,
@@ -134,11 +134,11 @@ impl FunctionTracer<'_> {
                             | crate::GatherMode::ShuffleDown(index)
                             | crate::GatherMode::ShuffleUp(index)
                             | crate::GatherMode::ShuffleXor(index) => {
-                                self.expressions_used.insert(index)
+                                self.expressions_used.insert(index);
                             }
                         }
                         self.expressions_used.insert(argument);
-                        self.expressions_used.insert(result)
+                        self.expressions_used.insert(result);
                     }
 
                     // Trivial statements.
