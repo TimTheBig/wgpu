@@ -909,10 +909,6 @@ impl crate::Instance for super::Instance {
         }
     }
 
-    unsafe fn destroy_surface(&self, surface: super::Surface) {
-        unsafe { surface.functor.destroy_surface(surface.raw, None) };
-    }
-
     unsafe fn enumerate_adapters(
         &self,
         _surface_hint: Option<&super::Surface>,
@@ -968,6 +964,12 @@ impl crate::Instance for super::Instance {
         }
 
         exposed_adapters
+    }
+}
+
+impl Drop for super::Surface {
+    fn drop(&mut self) {
+        unsafe { self.functor.destroy_surface(self.raw, None) };
     }
 }
 
