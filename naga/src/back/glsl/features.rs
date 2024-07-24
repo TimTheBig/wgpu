@@ -471,7 +471,7 @@ impl<'a, W> Writer<'a, W> {
             }
         }
 
-        // Loop trough all expressions in both functions and the entry point
+        // Loop through all expressions in both functions and the entry point
         // to check for needed features
         for (expressions, info) in module
             .functions
