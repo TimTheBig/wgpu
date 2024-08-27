@@ -926,6 +926,10 @@ fn convert_wgsl() {
         ),
         ("vertex-pulling-transform", Targets::METAL),
         (
+            "cross",
+            Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
         ),
