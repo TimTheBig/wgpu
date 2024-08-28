@@ -13,6 +13,7 @@ use serde::Deserialize;
 #[cfg(any(feature = "serde", test))]
 use serde::Serialize;
 use std::hash::{Hash, Hasher};
+use std::mem::size_of;
 use std::path::PathBuf;
 use std::{num::NonZeroU32, ops::Range};
 
@@ -7244,7 +7245,7 @@ impl DrawIndirectArgs {
         unsafe {
             std::mem::transmute(std::slice::from_raw_parts(
                 std::ptr::from_ref(self).cast::<u8>(),
-                std::mem::size_of::<Self>(),
+                size_of::<Self>(),
             ))
         }
     }
@@ -7275,7 +7276,7 @@ impl DrawIndexedIndirectArgs {
         unsafe {
             std::mem::transmute(std::slice::from_raw_parts(
                 std::ptr::from_ref(self).cast::<u8>(),
-                std::mem::size_of::<Self>(),
+                size_of::<Self>(),
             ))
         }
     }
@@ -7300,7 +7301,7 @@ impl DispatchIndirectArgs {
         unsafe {
             std::mem::transmute(std::slice::from_raw_parts(
                 std::ptr::from_ref(self).cast::<u8>(),
-                std::mem::size_of::<Self>(),
+                size_of::<Self>(),
             ))
         }
     }
