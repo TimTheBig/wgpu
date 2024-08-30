@@ -1,7 +1,7 @@
 use super::Error;
 use crate::{
     back::{self, Baked},
-    proc::{self, NameKey},
+    proc::{self, ExpressionKindTracker, NameKey},
     valid, Handle, Module, ShaderStage, TypeInner,
 };
 use std::fmt::Write;
@@ -168,6 +168,7 @@ impl<W: Write> Writer<W> {
                 info: fun_info,
                 expressions: &function.expressions,
                 named_expressions: &function.named_expressions,
+                expr_kind_tracker: ExpressionKindTracker::from_arena(&function.expressions),
             };
 
             // Write the function
@@ -195,6 +196,7 @@ impl<W: Write> Writer<W> {
                 info: info.get_entry_point(index),
                 expressions: &ep.function.expressions,
                 named_expressions: &ep.function.named_expressions,
+                expr_kind_tracker: ExpressionKindTracker::from_arena(&ep.function.expressions),
             };
             self.write_function(module, &ep.function, &func_ctx)?;
 
@@ -1133,8 +1135,14 @@ impl<W: Write> Writer<W> {
         func_ctx: &back::FunctionCtx,
         name: &str,
     ) -> BackendResult {
+        // Some functions are marked as const, but are not yet implemented as constant expression
+        let quantifier = if func_ctx.expr_kind_tracker.is_impl_const(handle) {
+            "const"
+        } else {
+            "let"
+        };
         // Write variable name
-        write!(self.out, "let {name}")?;
+        write!(self.out, "{quantifier} {name}")?;
         if self.flags.contains(WriterFlags::EXPLICIT_TYPES) {
             write!(self.out, ": ")?;
             let ty = &func_ctx.info[handle].ty;
