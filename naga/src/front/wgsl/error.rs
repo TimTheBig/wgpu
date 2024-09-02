@@ -265,6 +265,8 @@ pub(crate) enum Error<'a> {
     PipelineConstantIDValue(Span),
     /// String literals are only used with debugPrintf
     UnexpectedStringLiteral(Span),
+    NotBool(Span),
+    ConstAssertFailed(Span),
 }
 
 #[derive(Clone, Debug)]
@@ -825,7 +827,23 @@ impl<'a> Error<'a> {
                     "string literals can only be used as the first argument to debugPrintf".into(),
                 )],
                 notes: vec![],
-            }
+            },
+            Error::NotBool(span) => ParseError {
+                message: "must be a const-expression that resolves to a bool".to_string(),
+                labels: vec![(
+                    span,
+                    "must resolve to bool".into(),
+                )],
+                notes: vec![],
+            },
+            Error::ConstAssertFailed(span) => ParseError {
+                message: "const_assert failure".to_string(),
+                labels: vec![(
+                    span,
+                    "evaluates to false".into(),
+                )],
+                notes: vec![],
+            },
         }
     }
 }
