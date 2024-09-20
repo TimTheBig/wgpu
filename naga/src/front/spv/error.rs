@@ -164,6 +164,6 @@ impl Error {
 
 impl From<atomic_upgrade::Error> for Error {
     fn from(source: atomic_upgrade::Error) -> Self {
-        crate::front::spv::Error::AtomicUpgradeError(source)
+        Error::AtomicUpgradeError(source)
     }
 }
