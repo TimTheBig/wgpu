@@ -947,6 +947,7 @@ fn convert_wgsl() {
             "phony_assignment",
             Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
         ),
+        ("6220-break-from-loop", Targets::SPIRV),
         (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
