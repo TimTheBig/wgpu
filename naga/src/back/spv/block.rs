@@ -4,7 +4,7 @@ Implementations for `BlockContext` methods.
 
 use super::{
     helpers, index::BoundsCheckResult, selection::Selection, Block, BlockContext, Dimension, Error,
-    Instruction, LocalType, LookupType, ResultMember, Writer, WriterFlags,
+    Instruction, LocalType, LookupType, NumericType, ResultMember, Writer, WriterFlags,
 };
 use crate::{arena::Handle, proc::TypeResolution, Statement};
 use spirv::Word;
@@ -105,10 +105,9 @@ impl Writer {
         position_id: Word,
         body: &mut Vec<Instruction>,
     ) -> Result<(), Error> {
-        let float_ptr_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-            vector_size: None,
-            scalar: crate::Scalar::F32,
-            pointer_space: Some(spirv::StorageClass::Output),
+        let float_ptr_type_id = self.get_type_id(LookupType::Local(LocalType::LocalPointer {
+            base: NumericType::Scalar(crate::Scalar::F32),
+            class: spirv::StorageClass::Output,
         }));
         let index_y_id = self.get_index_constant(1);
         let access_id = self.id_gen.next();
@@ -119,11 +118,9 @@ impl Writer {
             &[index_y_id],
         ));
 
-        let float_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-            vector_size: None,
-            scalar: crate::Scalar::F32,
-            pointer_space: None,
-        }));
+        let float_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+            NumericType::Scalar(crate::Scalar::F32),
+        )));
         let load_id = self.id_gen.next();
         body.push(Instruction::load(float_type_id, load_id, access_id, None));
 
@@ -145,11 +142,9 @@ impl Writer {
         frag_depth_id: Word,
         body: &mut Vec<Instruction>,
     ) -> Result<(), Error> {
-        let float_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-            vector_size: None,
-            scalar: crate::Scalar::F32,
-            pointer_space: None,
-        }));
+        let float_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+            NumericType::Scalar(crate::Scalar::F32),
+        )));
         let zero_scalar_id = self.get_constant_scalar(crate::Literal::F32(0.0));
         let one_scalar_id = self.get_constant_scalar(crate::Literal::F32(1.0));
 
@@ -831,12 +826,8 @@ impl<'w> BlockContext<'w> {
                         let mut arg2_id = self.writer.get_constant_scalar_with(1, scalar)?;
 
                         if let Some(size) = maybe_size {
-                            let ty = LocalType::Value {
-                                vector_size: Some(size),
-                                scalar,
-                                pointer_space: None,
-                            }
-                            .into();
+                            let ty =
+                                LocalType::Numeric(NumericType::Vector { size, scalar }).into();
 
                             self.temp_list.clear();
                             self.temp_list.resize(size as _, arg1_id);
@@ -951,12 +942,9 @@ impl<'w> BlockContext<'w> {
                                 &crate::TypeInner::Vector { size, .. },
                                 &crate::TypeInner::Scalar(scalar),
                             ) => {
-                                let selector_type_id =
-                                    self.get_type_id(LookupType::Local(LocalType::Value {
-                                        vector_size: Some(size),
-                                        scalar,
-                                        pointer_space: None,
-                                    }));
+                                let selector_type_id = self.get_type_id(LookupType::Local(
+                                    LocalType::Numeric(NumericType::Vector { size, scalar }),
+                                ));
                                 self.temp_list.clear();
                                 self.temp_list.resize(size as usize, arg2_id);
 
@@ -999,12 +987,8 @@ impl<'w> BlockContext<'w> {
                     Mf::CountTrailingZeros => {
                         let uint_id = match *arg_ty {
                             crate::TypeInner::Vector { size, scalar } => {
-                                let ty = LocalType::Value {
-                                    vector_size: Some(size),
-                                    scalar,
-                                    pointer_space: None,
-                                }
-                                .into();
+                                let ty =
+                                    LocalType::Numeric(NumericType::Vector { size, scalar }).into();
 
                                 self.temp_list.clear();
                                 self.temp_list.resize(
@@ -1041,12 +1025,8 @@ impl<'w> BlockContext<'w> {
                     Mf::CountLeadingZeros => {
                         let (int_type_id, int_id, width) = match *arg_ty {
                             crate::TypeInner::Vector { size, scalar } => {
-                                let ty = LocalType::Value {
-                                    vector_size: Some(size),
-                                    scalar,
-                                    pointer_space: None,
-                                }
-                                .into();
+                                let ty =
+                                    LocalType::Numeric(NumericType::Vector { size, scalar }).into();
 
                                 self.temp_list.clear();
                                 self.temp_list.resize(
@@ -1062,11 +1042,9 @@ impl<'w> BlockContext<'w> {
                                 )
                             }
                             crate::TypeInner::Scalar(scalar) => (
-                                self.get_type_id(LookupType::Local(LocalType::Value {
-                                    vector_size: None,
-                                    scalar,
-                                    pointer_space: None,
-                                })),
+                                self.get_type_id(LookupType::Local(LocalType::Numeric(
+                                    NumericType::Scalar(scalar),
+                                ))),
                                 self.writer
                                     .get_constant_scalar_with(scalar.width * 8 - 1, scalar)?,
                                 scalar.width,
@@ -1131,14 +1109,9 @@ impl<'w> BlockContext<'w> {
                             .writer
                             .get_constant_scalar(crate::Literal::U32(bit_width as u32));
 
-                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
-                                kind: crate::ScalarKind::Uint,
-                                width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar::U32),
+                        )));
 
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
@@ -1187,14 +1160,9 @@ impl<'w> BlockContext<'w> {
                             .writer
                             .get_constant_scalar(crate::Literal::U32(bit_width as u32));
 
-                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
-                                kind: crate::ScalarKind::Uint,
-                                width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar::U32),
+                        )));
 
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
@@ -1260,23 +1228,16 @@ impl<'w> BlockContext<'w> {
                             Mf::Pack4xU8 => (crate::ScalarKind::Uint, false),
                             _ => unreachable!(),
                         };
-                        let uint_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
-                                kind: crate::ScalarKind::Uint,
-                                width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                        let uint_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar::U32),
+                        )));
 
-                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
+                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar {
                                 kind: int_type,
                                 width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                            }),
+                        )));
 
                         let mut last_instruction = Instruction::new(spirv::Op::Nop);
 
@@ -1353,24 +1314,17 @@ impl<'w> BlockContext<'w> {
                             _ => unreachable!(),
                         };
 
-                        let sint_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
-                                kind: crate::ScalarKind::Sint,
-                                width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                        let sint_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar::I32),
+                        )));
 
                         let eight = self.writer.get_constant_scalar(crate::Literal::U32(8));
-                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: None,
-                            scalar: crate::Scalar {
+                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
+                            NumericType::Scalar(crate::Scalar {
                                 kind: int_type,
                                 width: 4,
-                            },
-                            pointer_space: None,
-                        }));
+                            }),
+                        )));
                         block
                             .body
                             .reserve(usize::from(VEC_LENGTH) * 2 + usize::from(is_signed));
@@ -1534,11 +1488,10 @@ impl<'w> BlockContext<'w> {
                                 self.writer.get_constant_scalar_with(0, src_scalar)?;
                             let zero_id = match src_size {
                                 Some(size) => {
-                                    let ty = LocalType::Value {
-                                        vector_size: Some(size),
+                                    let ty = LocalType::Numeric(NumericType::Vector {
+                                        size,
                                         scalar: src_scalar,
-                                        pointer_space: None,
-                                    }
+                                    })
                                     .into();
 
                                     self.temp_list.clear();
@@ -1563,11 +1516,10 @@ impl<'w> BlockContext<'w> {
                                 self.writer.get_constant_scalar_with(1, dst_scalar)?;
                             let (accept_id, reject_id) = match src_size {
                                 Some(size) => {
-                                    let ty = LocalType::Value {
-                                        vector_size: Some(size),
+                                    let ty = LocalType::Numeric(NumericType::Vector {
+                                        size,
                                         scalar: dst_scalar,
-                                        pointer_space: None,
-                                    }
+                                    })
                                     .into();
 
                                     self.temp_list.clear();
@@ -1705,12 +1657,12 @@ impl<'w> BlockContext<'w> {
                     self.temp_list.clear();
                     self.temp_list.resize(size as usize, condition_id);
 
-                    let bool_vector_type_id =
-                        self.get_type_id(LookupType::Local(LocalType::Value {
-                            vector_size: Some(size),
+                    let bool_vector_type_id = self.get_type_id(LookupType::Local(
+                        LocalType::Numeric(NumericType::Vector {
+                            size,
                             scalar: condition_scalar,
-                            pointer_space: None,
-                        }));
+                        }),
+                    ));
 
                     let id = self.gen_id();
                     block.body.push(Instruction::composite_construct(
@@ -2032,11 +1984,11 @@ impl<'w> BlockContext<'w> {
     ) {
         self.temp_list.clear();
 
-        let vector_type_id = self.get_type_id(LookupType::Local(LocalType::Value {
-            vector_size: Some(rows),
-            scalar: crate::Scalar::float(width),
-            pointer_space: None,
-        }));
+        let vector_type_id =
+            self.get_type_id(LookupType::Local(LocalType::Numeric(NumericType::Vector {
+                size: rows,
+                scalar: crate::Scalar::float(width),
+            })));
 
         for index in 0..columns as u32 {
             let column_id_left = self.gen_id();
@@ -2738,20 +2690,15 @@ impl<'w> BlockContext<'w> {
                         crate::AtomicFunction::Exchange { compare: Some(cmp) } => {
                             let scalar_type_id = match *value_inner {
                                 crate::TypeInner::Scalar(scalar) => {
-                                    self.get_type_id(LookupType::Local(LocalType::Value {
-                                        vector_size: None,
-                                        scalar,
-                                        pointer_space: None,
-                                    }))
+                                    self.get_type_id(LookupType::Local(LocalType::Numeric(
+                                        NumericType::Scalar(scalar),
+                                    )))
                                 }
                                 _ => unimplemented!(),
                             };
-                            let bool_type_id =
-                                self.get_type_id(LookupType::Local(LocalType::Value {
-                                    vector_size: None,
-                                    scalar: crate::Scalar::BOOL,
-                                    pointer_space: None,
-                                }));
+                            let bool_type_id = self.get_type_id(LookupType::Local(
+                                LocalType::Numeric(NumericType::Scalar(crate::Scalar::BOOL)),
+                            ));
 
                             let cas_result_id = self.gen_id();
                             let equality_result_id = self.gen_id();
