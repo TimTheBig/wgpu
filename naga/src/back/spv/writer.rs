@@ -1629,6 +1629,7 @@ impl Writer {
                     Bi::InstanceIndex => BuiltIn::InstanceIndex,
                     Bi::PointSize => BuiltIn::PointSize,
                     Bi::VertexIndex => BuiltIn::VertexIndex,
+                    Bi::DrawID => BuiltIn::DrawIndex,
                     // fragment
                     Bi::FragDepth => BuiltIn::FragDepth,
                     Bi::PointCoord => BuiltIn::PointCoord,
