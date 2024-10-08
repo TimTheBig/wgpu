@@ -23,5 +23,9 @@
             target_profile:"cs_5_1",
             debug_printf:false,
         ),
+        (
+            entry_point:"assign_to_ptr_components",
+            target_profile:"cs_5_1",
+        ),
     ],
 )
