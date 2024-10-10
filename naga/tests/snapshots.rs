@@ -951,6 +951,7 @@ fn convert_wgsl() {
             Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
         ),
         ("6220-break-from-loop", Targets::SPIRV),
+        ("index-by-value", Targets::SPIRV | Targets::IR),
         (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
