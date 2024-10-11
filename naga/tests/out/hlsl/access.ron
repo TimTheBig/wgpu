@@ -5,10 +5,6 @@
             target_profile:"vs_5_1",
             debug_printf:false,
         ),
-        (
-            entry_point:"foo_1",
-            target_profile:"vs_5_1",
-        ),
     ],
     fragment:[
         (
