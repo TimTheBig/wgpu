@@ -953,6 +953,10 @@ fn convert_wgsl() {
         ("6220-break-from-loop", Targets::SPIRV),
         ("index-by-value", Targets::SPIRV | Targets::IR),
         (
+            "6438-conflicting-idents",
+            Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
         ),
