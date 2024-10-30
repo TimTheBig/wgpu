@@ -24,7 +24,7 @@ fn get_dimension(type_inner: &crate::TypeInner) -> Dimension {
 /// types are simply the direct SPIR-V analog of the Naga IR's. But in some
 /// cases, the Naga IR and SPIR-V types need to diverge.
 ///
-/// This enum specifies how [`BlockContext::write_expression_pointer`] should
+/// This enum specifies how [`BlockContext::write_access_chain`] should
 /// choose a SPIR-V result type for the `OpAccessChain` it generates, based on
 /// the type of the given Naga IR [`Expression`] it's generating code for.
 ///
@@ -68,7 +68,7 @@ enum AccessTypeAdjustment {
 
 /// The results of emitting code for a left-hand-side expression.
 ///
-/// On success, `write_expression_pointer` returns one of these.
+/// On success, `write_access_chain` returns one of these.
 enum ExpressionPointer {
     /// The pointer to the expression's value is available, as the value of the
     /// expression with the given id.
@@ -408,7 +408,7 @@ impl<'w> BlockContext<'w> {
                     } => {
                         // Only binding arrays in the `Handle` address space will take
                         // this path, since we handled the `Pointer` case above.
-                        let result_id = match self.write_expression_pointer(
+                        let result_id = match self.write_access_chain(
                             expr_handle,
                             block,
                             AccessTypeAdjustment::IntroducePointer(
@@ -499,7 +499,7 @@ impl<'w> BlockContext<'w> {
                     } => {
                         // Only binding arrays in the `Handle` address space will take
                         // this path, since we handled the `Pointer` case above.
-                        let result_id = match self.write_expression_pointer(
+                        let result_id = match self.write_access_chain(
                             expr_handle,
                             block,
                             AccessTypeAdjustment::IntroducePointer(
@@ -1752,7 +1752,7 @@ impl<'w> BlockContext<'w> {
     ///
     /// On success, the return value is an [`ExpressionPointer`] value; see the
     /// documentation for that type.
-    fn write_expression_pointer(
+    fn write_access_chain(
         &mut self,
         mut expr_handle: Handle<crate::Expression>,
         block: &mut Block,
@@ -1983,7 +1983,7 @@ impl<'w> BlockContext<'w> {
         access_type_adjustment: AccessTypeAdjustment,
         result_type_id: Word,
     ) -> Result<Word, Error> {
-        match self.write_expression_pointer(pointer, block, access_type_adjustment)? {
+        match self.write_access_chain(pointer, block, access_type_adjustment)? {
             ExpressionPointer::Ready { pointer_id } => {
                 let id = self.gen_id();
                 let atomic_space =
@@ -2604,7 +2604,7 @@ impl<'w> BlockContext<'w> {
                 }
                 Statement::Store { pointer, value } => {
                     let value_id = self.cached[value];
-                    match self.write_expression_pointer(
+                    match self.write_access_chain(
                         pointer,
                         &mut block,
                         AccessTypeAdjustment::None,
@@ -2704,7 +2704,7 @@ impl<'w> BlockContext<'w> {
                         self.cached[result] = id;
                     }
 
-                    let pointer_id = match self.write_expression_pointer(
+                    let pointer_id = match self.write_access_chain(
                         pointer,
                         &mut block,
                         AccessTypeAdjustment::None,
@@ -2876,7 +2876,7 @@ impl<'w> BlockContext<'w> {
                         .write_barrier(crate::Barrier::WORK_GROUP, &mut block);
                     let result_type_id = self.get_expression_type_id(&self.fun_info[result].ty);
                     // Embed the body of
-                    match self.write_expression_pointer(
+                    match self.write_access_chain(
                         pointer,
                         &mut block,
                         AccessTypeAdjustment::None,
