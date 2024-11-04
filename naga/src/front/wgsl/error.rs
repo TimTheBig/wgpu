@@ -136,6 +136,8 @@ pub enum ExpectedToken<'a> {
     Variable,
     /// Access of a function
     Function,
+    /// The `diagnostic` identifier of the `@diagnostic(…)` attribute.
+    DiagnosticAttribute,
 }
 
 #[derive(Clone, Copy, Debug, Error, PartialEq)]
@@ -390,6 +392,9 @@ impl<'a> Error<'a> {
                     }
                     ExpectedToken::AfterIdentListComma => {
                         "next argument or end of list (';')".to_string()
+                    }
+                    ExpectedToken::DiagnosticAttribute => {
+                        "the 'diagnostic' attribute identifier".to_string()
                     }
                 };
                 ParseError {
