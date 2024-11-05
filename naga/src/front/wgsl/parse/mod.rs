@@ -2635,11 +2635,10 @@ impl Parser {
         lexer.expect(Token::Paren('('))?;
 
         let (severity_control_name, severity_control_name_span) = lexer.next_ident_with_span()?;
-        let new_severity = diagnostic_filter::Severity::from_ident(severity_control_name).ok_or(
-            Error::DiagnosticInvalidSeverity {
+        let new_severity = diagnostic_filter::Severity::from_wgsl_ident(severity_control_name)
+            .ok_or(Error::DiagnosticInvalidSeverity {
                 severity_control_name_span,
-            },
-        )?;
+            })?;
 
         lexer.expect(Token::Separator(','))?;
 
@@ -2656,7 +2655,7 @@ impl Parser {
 
         let filter = diagnostic_rule_name
             .and_then(|name| {
-                FilterableTriggeringRule::from_ident(name)
+                FilterableTriggeringRule::from_wgsl_ident(name)
                     .map(Ok)
                     .or_else(|| {
                         diagnostic_filter::Severity::Warning
