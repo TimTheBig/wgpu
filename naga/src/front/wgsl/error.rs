@@ -1045,7 +1045,7 @@ impl<'a> Error<'a> {
                 .into()],
             },
             Error::DiagnosticDuplicateTriggeringRule(ConflictingDiagnosticRuleError {
-                triggering_rule,
+                ref triggering_rule,
                 triggering_rule_spans,
             }) => {
                 let [first_span, second_span] = triggering_rule_spans;
