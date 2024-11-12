@@ -3052,6 +3052,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     Unpack4x8unorm,
                     Unpack4xI8,
                     Unpack4xU8,
+                    QuantizeToF16,
                     Regular(&'static str),
                     MissingIntOverload(&'static str),
                     MissingIntReturnType(&'static str),
@@ -3118,6 +3119,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     //Mf::Inverse =>,
                     Mf::Transpose => Function::Regular("transpose"),
                     Mf::Determinant => Function::Regular("determinant"),
+                    Mf::QuantizeToF16 => Function::QuantizeToF16,
                     // bits
                     Mf::CountTrailingZeros => Function::CountTrailingZeros,
                     Mf::CountLeadingZeros => Function::CountLeadingZeros,
@@ -3318,6 +3320,11 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                         write!(self.out, " >> 16, ")?;
                         self.write_expr(module, arg, func_ctx)?;
                         write!(self.out, " >> 24) << 24 >> 24")?;
+                    }
+                    Function::QuantizeToF16 => {
+                        write!(self.out, "f16tof32(f32tof16(")?;
+                        self.write_expr(module, arg, func_ctx)?;
+                        write!(self.out, "))")?;
                     }
                     Function::Regular(fun_name) => {
                         write!(self.out, "{fun_name}(")?;
