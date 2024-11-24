@@ -2838,7 +2838,7 @@ impl<'de> Deserialize<'de> for TextureFormat {
 
         struct TextureFormatVisitor;
 
-        impl<'de> de::Visitor<'de> for TextureFormatVisitor {
+        impl de::Visitor<'_> for TextureFormatVisitor {
             type Value = TextureFormat;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

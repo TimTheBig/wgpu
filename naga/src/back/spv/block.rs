@@ -260,7 +260,7 @@ impl Writer {
     }
 }
 
-impl<'w> BlockContext<'w> {
+impl BlockContext<'_> {
     /// Cache an expression for a value.
     pub(super) fn cache_expression_value(
         &mut self,
