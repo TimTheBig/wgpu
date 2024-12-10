@@ -16,6 +16,7 @@ use wgpu::{
 use wgpu_test::TestingContext;
 
 pub mod debug_printf;
+pub mod array_size_overrides;
 pub mod compilation_messages;
 pub mod data_builtins;
 pub mod numeric_builtins;

@@ -522,6 +522,9 @@ impl<W: Write> Writer<W> {
                         self.write_type(module, base)?;
                         write!(self.out, ", {len}")?;
                     }
+                    crate::ArraySize::Pending(_) => {
+                        unreachable!();
+                    }
                     crate::ArraySize::Dynamic => {
                         self.write_type(module, base)?;
                     }
@@ -535,6 +538,9 @@ impl<W: Write> Writer<W> {
                     crate::ArraySize::Constant(len) => {
                         self.write_type(module, base)?;
                         write!(self.out, ", {len}")?;
+                    }
+                    crate::ArraySize::Pending(_) => {
+                        unreachable!();
                     }
                     crate::ArraySize::Dynamic => {
                         self.write_type(module, base)?;
