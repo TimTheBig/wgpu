@@ -4114,7 +4114,7 @@ impl<'a, W: Write> Writer<'a, W> {
     ) -> Result<(), Error> {
         use crate::ImageDimension as IDim;
 
-        // NOTE: openGL requires that `imageStore`s have no effets when the texel is invalid
+        // NOTE: openGL requires that `imageStore`s have no effects when the texel is invalid
         // so we don't need to generate bounds checks (OpenGL 4.2 Core §3.9.20)
 
         // This will only panic if the module is invalid
