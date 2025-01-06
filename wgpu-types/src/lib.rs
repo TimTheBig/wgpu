@@ -7723,7 +7723,7 @@ pub enum Gles3MinorVersion {
 }
 
 /// Options for creating an instance.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InstanceDescriptor {
     /// Which `Backends` to enable.
     pub backends: Backends,
