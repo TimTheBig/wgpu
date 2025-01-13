@@ -179,7 +179,7 @@ bitflags::bitflags! {
 
 impl DecorationFlags {
     fn to_storage_access(self) -> crate::StorageAccess {
-        let mut access = crate::StorageAccess::all();
+        let mut access = crate::StorageAccess::LOAD | crate::StorageAccess::STORE;
         if self.contains(DecorationFlags::NON_READABLE) {
             access &= !crate::StorageAccess::LOAD;
         }
@@ -4494,6 +4494,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                 | S::Store { .. }
                 | S::ImageStore { .. }
                 | S::Atomic { .. }
+                | S::ImageAtomic { .. }
                 | S::RayQuery { .. }
                 | S::DebugPrintf { .. } => {}
                 | S::SubgroupBallot { .. }

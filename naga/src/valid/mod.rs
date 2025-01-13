@@ -152,9 +152,11 @@ bitflags::bitflags! {
         /// [`AtomicFunction::Exchange { compare: None }`]: crate::AtomicFunction::Exchange
         /// [`Storage`]: crate::AddressSpace::Storage
         const SHADER_FLOAT32_ATOMIC = 1 << 21;
+        /// Support for atomic operations on images.
+        const TEXTURE_ATOMIC = 1 << 22;
 
         /// Support for `debugPrintf`
-        const DEBUG_PRINTF = 1 << 22;
+        const DEBUG_PRINTF = 1 << 23;
     }
 }
 
