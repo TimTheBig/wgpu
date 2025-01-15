@@ -154,9 +154,11 @@ bitflags::bitflags! {
         const SHADER_FLOAT32_ATOMIC = 1 << 21;
         /// Support for atomic operations on images.
         const TEXTURE_ATOMIC = 1 << 22;
+        /// Support for atomic operations on 64-bit images.
+        const TEXTURE_INT64_ATOMIC = 1 << 23;
 
         /// Support for `debugPrintf`
-        const DEBUG_PRINTF = 1 << 23;
+        const DEBUG_PRINTF = 1 << 24;
     }
 }
 
