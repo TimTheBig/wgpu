@@ -21,7 +21,7 @@ struct FunctionInterface<'a> {
 }
 
 impl Function {
-    fn to_words(&self, sink: &mut impl Extend<Word>) {
+    pub(super) fn to_words(&self, sink: &mut impl Extend<Word>) {
         self.signature.as_ref().unwrap().to_words(sink);
         for argument in self.parameters.iter() {
             argument.instruction.to_words(sink);
@@ -83,6 +83,7 @@ impl Writer {
             saved_cached: CachedExpressions::default(),
             ext_inst_ids,
             temp_list: Vec::new(),
+            ray_get_intersection_function: None,
         })
     }
 
@@ -135,6 +136,7 @@ impl Writer {
             saved_cached: take(&mut self.saved_cached).recycle(),
             ext_inst_ids,
             temp_list: take(&mut self.temp_list).recycle(),
+            ray_get_intersection_function: None,
         };
 
         *self = fresh;
@@ -1857,7 +1859,7 @@ impl Writer {
         Ok(())
     }
 
-    fn get_function_type(&mut self, lookup_function_type: LookupFunctionType) -> Word {
+    pub(super) fn get_function_type(&mut self, lookup_function_type: LookupFunctionType) -> Word {
         match self
             .lookup_function_type
             .entry(lookup_function_type.clone())
