@@ -977,6 +977,7 @@ fn convert_wgsl() {
             "6772-unpack-expr-accesses",
             Targets::SPIRV | Targets::METAL | Targets::GLSL | Targets::HLSL | Targets::WGSL,
         ),
+        ("must-use", Targets::IR),
         (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
