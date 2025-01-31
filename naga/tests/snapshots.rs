@@ -984,6 +984,10 @@ fn convert_wgsl() {
         ),
         ("must-use", Targets::IR),
         (
+            "storage-textures",
+            Targets::IR | Targets::ANALYSIS | Targets::SPIRV | Targets::METAL | Targets::HLSL,
+        ),
+        (
             "debug-printf",
             Targets::WGSL | Targets::GLSL | Targets::SPIRV | Targets::HLSL,
         ),
