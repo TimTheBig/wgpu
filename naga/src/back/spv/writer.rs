@@ -40,6 +40,7 @@ impl Function {
                 instruction.to_words(sink);
             }
         }
+        Instruction::function_end().to_words(sink);
     }
 }
 
@@ -555,7 +556,6 @@ impl Writer {
 
         function.consume(block, Instruction::return_value(return_id));
         function.to_words(&mut self.logical_layout.function_definitions);
-        Instruction::function_end().to_words(&mut self.logical_layout.function_definitions);
         Ok(())
     }
 
@@ -958,7 +958,6 @@ impl Writer {
         self.temp_list = temp_list;
 
         function.to_words(&mut self.logical_layout.function_definitions);
-        Instruction::function_end().to_words(&mut self.logical_layout.function_definitions);
 
         Ok(function_id)
     }
