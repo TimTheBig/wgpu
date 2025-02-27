@@ -1169,9 +1169,8 @@ impl BlockContext<'_> {
                                 &crate::TypeInner::Vector { size, .. },
                                 &crate::TypeInner::Scalar(scalar),
                             ) => {
-                                let selector_type_id = self.get_type_id(LookupType::Local(
-                                    LocalType::Numeric(NumericType::Vector { size, scalar }),
-                                ));
+                                let selector_type_id =
+                                    self.get_numeric_type_id(NumericType::Vector { size, scalar });
                                 self.temp_list.clear();
                                 self.temp_list.resize(size as usize, arg2_id);
 
@@ -1275,9 +1274,7 @@ impl BlockContext<'_> {
                                 )
                             }
                             crate::TypeInner::Scalar(scalar) => (
-                                self.get_type_id(LookupType::Local(LocalType::Numeric(
-                                    NumericType::Scalar(scalar),
-                                ))),
+                                self.get_numeric_type_id(NumericType::Scalar(scalar)),
                                 self.writer
                                     .get_constant_scalar_with(scalar.width * 8 - 1, scalar)?,
                                 scalar.width,
@@ -1342,9 +1339,8 @@ impl BlockContext<'_> {
                             .writer
                             .get_constant_scalar(crate::Literal::U32(bit_width as u32));
 
-                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar::U32),
-                        )));
+                        let u32_type =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar::U32));
 
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
@@ -1393,9 +1389,8 @@ impl BlockContext<'_> {
                             .writer
                             .get_constant_scalar(crate::Literal::U32(bit_width as u32));
 
-                        let u32_type = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar::U32),
-                        )));
+                        let u32_type =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar::U32));
 
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
@@ -1461,16 +1456,14 @@ impl BlockContext<'_> {
                             Mf::Pack4xU8 => (crate::ScalarKind::Uint, false),
                             _ => unreachable!(),
                         };
-                        let uint_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar::U32),
-                        )));
+                        let uint_type_id =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar::U32));
 
-                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar {
+                        let int_type_id =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar {
                                 kind: int_type,
                                 width: 4,
-                            }),
-                        )));
+                            }));
 
                         let mut last_instruction = Instruction::new(spirv::Op::Nop);
 
@@ -1547,17 +1540,15 @@ impl BlockContext<'_> {
                             _ => unreachable!(),
                         };
 
-                        let sint_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar::I32),
-                        )));
+                        let sint_type_id =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar::I32));
 
                         let eight = self.writer.get_constant_scalar(crate::Literal::U32(8));
-                        let int_type_id = self.get_type_id(LookupType::Local(LocalType::Numeric(
-                            NumericType::Scalar(crate::Scalar {
+                        let int_type_id =
+                            self.get_numeric_type_id(NumericType::Scalar(crate::Scalar {
                                 kind: int_type,
                                 width: 4,
-                            }),
-                        )));
+                            }));
                         block
                             .body
                             .reserve(usize::from(VEC_LENGTH) * 2 + usize::from(is_signed));
@@ -1839,12 +1830,10 @@ impl BlockContext<'_> {
                     self.temp_list.clear();
                     self.temp_list.resize(size as usize, condition_id);
 
-                    let bool_vector_type_id = self.get_type_id(LookupType::Local(
-                        LocalType::Numeric(NumericType::Vector {
-                            size,
-                            scalar: condition_scalar,
-                        }),
-                    ));
+                    let bool_vector_type_id = self.get_numeric_type_id(NumericType::Vector {
+                        size,
+                        scalar: condition_scalar,
+                    });
 
                     let id = self.gen_id();
                     block.body.push(Instruction::composite_construct(
@@ -2348,11 +2337,10 @@ impl BlockContext<'_> {
     ) {
         self.temp_list.clear();
 
-        let vector_type_id =
-            self.get_type_id(LookupType::Local(LocalType::Numeric(NumericType::Vector {
-                size: rows,
-                scalar: crate::Scalar::float(width),
-            })));
+        let vector_type_id = self.get_numeric_type_id(NumericType::Vector {
+            size: rows,
+            scalar: crate::Scalar::float(width),
+        });
 
         for index in 0..columns as u32 {
             let column_id_left = self.gen_id();
@@ -3110,12 +3098,10 @@ impl BlockContext<'_> {
                             )
                         }
                         crate::AtomicFunction::Exchange { compare: Some(cmp) } => {
-                            let scalar_type_id = self.get_type_id(LookupType::Local(
-                                LocalType::Numeric(NumericType::Scalar(scalar)),
-                            ));
-                            let bool_type_id = self.get_type_id(LookupType::Local(
-                                LocalType::Numeric(NumericType::Scalar(crate::Scalar::BOOL)),
-                            ));
+                            let scalar_type_id =
+                                self.get_numeric_type_id(NumericType::Scalar(scalar));
+                            let bool_type_id =
+                                self.get_numeric_type_id(NumericType::Scalar(crate::Scalar::BOOL));
 
                             let cas_result_id = self.gen_id();
                             let equality_result_id = self.gen_id();
