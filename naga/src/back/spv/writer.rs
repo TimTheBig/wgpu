@@ -233,6 +233,10 @@ impl Writer {
         }
     }
 
+    pub(super) fn get_handle_type_id(&mut self, handle: Handle<crate::Type>) -> Word {
+        self.get_type_id(LookupType::Handle(handle))
+    }
+
     pub(super) fn get_expression_lookup_type(&mut self, tr: &TypeResolution) -> LookupType {
         match *tr {
             TypeResolution::Handle(ty_handle) => LookupType::Handle(ty_handle),
@@ -650,7 +654,7 @@ impl Writer {
             let handle_ty = ir_module.types[argument.ty].inner.is_handle();
             let argument_type_id = match handle_ty {
                 true => self.get_pointer_type_id(argument.ty, spirv::StorageClass::UniformConstant),
-                false => self.get_type_id(LookupType::Handle(argument.ty)),
+                false => self.get_handle_type_id(argument.ty),
             };
 
             if let Some(ref mut iface) = interface {
@@ -682,7 +686,7 @@ impl Writer {
                     let struct_id = self.id_gen.next();
                     let mut constituent_ids = Vec::with_capacity(members.len());
                     for member in members {
-                        let type_id = self.get_type_id(LookupType::Handle(member.ty));
+                        let type_id = self.get_handle_type_id(member.ty);
                         let name = member.name.as_deref();
                         let binding = member.binding.as_ref().unwrap();
                         let varying_id = self.write_varying(
@@ -727,7 +731,7 @@ impl Writer {
                     handle_id: if handle_ty {
                         let id = self.id_gen.next();
                         prelude.body.push(Instruction::load(
-                            self.get_type_id(LookupType::Handle(argument.ty)),
+                            self.get_handle_type_id(argument.ty),
                             id,
                             argument_id,
                             None,
@@ -749,7 +753,7 @@ impl Writer {
                     if let Some(ref binding) = result.binding {
                         has_point_size |=
                             *binding == crate::Binding::BuiltIn(crate::BuiltIn::PointSize);
-                        let type_id = self.get_type_id(LookupType::Handle(result.ty));
+                        let type_id = self.get_handle_type_id(result.ty);
                         let varying_id = self.write_varying(
                             ir_module,
                             iface.stage,
@@ -768,7 +772,7 @@ impl Writer {
                         ir_module.types[result.ty].inner
                     {
                         for member in members {
-                            let type_id = self.get_type_id(LookupType::Handle(member.ty));
+                            let type_id = self.get_handle_type_id(member.ty);
                             let name = member.name.as_deref();
                             let binding = member.binding.as_ref().unwrap();
                             has_point_size |=
@@ -815,7 +819,7 @@ impl Writer {
                     }
                     self.void_type
                 } else {
-                    self.get_type_id(LookupType::Handle(result.ty))
+                    self.get_handle_type_id(result.ty)
                 }
             }
             None => self.void_type,
@@ -871,7 +875,7 @@ impl Writer {
                 }
                 _ => {
                     if var.space == crate::AddressSpace::Handle {
-                        let var_type_id = self.get_type_id(LookupType::Handle(var.ty));
+                        let var_type_id = self.get_handle_type_id(var.ty);
                         let id = self.id_gen.next();
                         prelude
                             .body
@@ -950,7 +954,7 @@ impl Writer {
                 init_word.or_else(|| match ir_module.types[variable.ty].inner {
                     crate::TypeInner::RayQuery { .. } => None,
                     _ => {
-                        let type_id = context.get_type_id(LookupType::Handle(variable.ty));
+                        let type_id = context.get_handle_type_id(variable.ty);
                         Some(context.writer.write_constant_null(type_id))
                     }
                 }),
@@ -1233,7 +1237,7 @@ impl Writer {
                 Instruction::type_pointer(id, class, base_id)
             }
             LocalType::Pointer { base, class } => {
-                let type_id = self.get_type_id(LookupType::Handle(base));
+                let type_id = self.get_handle_type_id(base);
                 Instruction::type_pointer(id, class, type_id)
             }
             LocalType::Image(image) => {
@@ -1246,7 +1250,7 @@ impl Writer {
                 Instruction::type_sampled_image(id, image_type_id)
             }
             LocalType::BindingArray { base, size } => {
-                let inner_ty = self.get_type_id(LookupType::Handle(base));
+                let inner_ty = self.get_handle_type_id(base);
                 let scalar_id = self.get_constant_scalar(crate::Literal::U32(size));
                 Instruction::type_array(id, inner_ty, scalar_id)
             }
@@ -1300,7 +1304,7 @@ impl Writer {
                 crate::TypeInner::Array { base, size, stride } => {
                     self.decorate(id, Decoration::ArrayStride, &[stride]);
 
-                    let type_id = self.get_type_id(LookupType::Handle(base));
+                    let type_id = self.get_handle_type_id(base);
                     match size {
                         crate::ArraySize::Constant(length) => {
                             let length_id = self.get_index_constant(length.get());
@@ -1311,7 +1315,7 @@ impl Writer {
                     }
                 }
                 crate::TypeInner::BindingArray { base, size } => {
-                    let type_id = self.get_type_id(LookupType::Handle(base));
+                    let type_id = self.get_handle_type_id(base);
                     match size {
                         crate::ArraySize::Constant(length) => {
                             let length_id = self.get_index_constant(length.get());
@@ -1340,7 +1344,7 @@ impl Writer {
                             _ => (),
                         }
                         self.decorate_struct_member(id, index, member, arena)?;
-                        let member_id = self.get_type_id(LookupType::Handle(member.ty));
+                        let member_id = self.get_handle_type_id(member.ty);
                         member_ids.push(member_id);
                     }
                     if has_runtime_array {
@@ -1568,7 +1572,7 @@ impl Writer {
                 self.constant_ids[constant.init]
             }
             crate::Expression::ZeroValue(ty) => {
-                let type_id = self.get_type_id(LookupType::Handle(ty));
+                let type_id = self.get_handle_type_id(ty);
                 self.get_constant_null(type_id)
             }
             crate::Expression::Compose { ty, ref components } => {
@@ -1651,7 +1655,7 @@ impl Writer {
                 // variables in the `Uniform` and `StorageBuffer` address spaces
                 // get wrapped, and we're initializing `WorkGroup` variables.
                 let var_id = self.global_variables[handle].var_id;
-                let var_type_id = self.get_type_id(LookupType::Handle(var.ty));
+                let var_type_id = self.get_handle_type_id(var.ty);
                 let init_word = self.get_constant_null(var_type_id);
                 Instruction::store(var_id, init_word, None)
             })
@@ -2090,7 +2094,7 @@ impl Writer {
                             }
                         }
                         if should_decorate {
-                            let decorated_id = self.get_type_id(LookupType::Handle(base));
+                            let decorated_id = self.get_handle_type_id(base);
                             self.decorate(decorated_id, Decoration::Block, &[]);
                         }
                     }
