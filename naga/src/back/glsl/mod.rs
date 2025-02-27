@@ -4645,6 +4645,9 @@ impl<'a, W: Write> Writer<'a, W> {
         if flags.contains(crate::Barrier::SUB_GROUP) {
             writeln!(self.out, "{level}subgroupMemoryBarrier();")?;
         }
+        if flags.contains(crate::Barrier::TEXTURE) {
+            writeln!(self.out, "{level}memoryBarrierImage();")?;
+        }
         writeln!(self.out, "{level}barrier();")?;
         Ok(())
     }
