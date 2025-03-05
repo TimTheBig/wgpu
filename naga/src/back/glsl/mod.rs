@@ -63,6 +63,7 @@ use thiserror::Error;
 
 use crate::{
     back::{self, Baked},
+    common,
     proc::{self, ExpressionKindTracker, NameKey},
     valid, Handle, ShaderStage, TypeInner,
 };
@@ -3463,7 +3464,7 @@ impl<'a, W: Write> Writer<'a, W> {
                             TypeInner::Vector { size, .. } => write!(
                                 self.out,
                                 ", vec{}(0.0), vec{0}(1.0)",
-                                back::vector_size_str(size)
+                                common::vector_size_str(size)
                             )?,
                             _ => write!(self.out, ", 0.0, 1.0")?,
                         }
@@ -3610,7 +3611,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     Mf::CountTrailingZeros => {
                         match *ctx.resolve_type(arg, &self.module.types) {
                             TypeInner::Vector { size, scalar, .. } => {
-                                let s = back::vector_size_str(size);
+                                let s = common::vector_size_str(size);
                                 if let crate::ScalarKind::Uint = scalar.kind {
                                     write!(self.out, "min(uvec{s}(findLSB(")?;
                                     self.write_expr(arg, ctx)?;
@@ -3640,7 +3641,7 @@ impl<'a, W: Write> Writer<'a, W> {
                         if self.options.version.supports_integer_functions() {
                             match *ctx.resolve_type(arg, &self.module.types) {
                                 TypeInner::Vector { size, scalar } => {
-                                    let s = back::vector_size_str(size);
+                                    let s = common::vector_size_str(size);
 
                                     if let crate::ScalarKind::Uint = scalar.kind {
                                         write!(self.out, "uvec{s}(ivec{s}(31) - findMSB(")?;
@@ -3671,7 +3672,7 @@ impl<'a, W: Write> Writer<'a, W> {
                         } else {
                             match *ctx.resolve_type(arg, &self.module.types) {
                                 TypeInner::Vector { size, scalar } => {
-                                    let s = back::vector_size_str(size);
+                                    let s = common::vector_size_str(size);
 
                                     if let crate::ScalarKind::Uint = scalar.kind {
                                         write!(self.out, "uvec{s}(")?;

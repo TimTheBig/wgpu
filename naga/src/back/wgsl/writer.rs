@@ -11,7 +11,10 @@ use super::ToWgslIfImplemented as _;
 use crate::back::wgsl::polyfill::InversePolyfill;
 use crate::{
     back::{self, Baked},
-    common::wgsl::{ToWgsl, TryToWgsl},
+    common::{
+        self,
+        wgsl::{ToWgsl, TryToWgsl},
+    },
     proc::{self, ExpressionKindTracker, NameKey},
     valid, Handle, Module, ShaderStage, TypeInner,
 };
@@ -421,7 +424,7 @@ impl<W: Write> Writer<W> {
             TypeInner::Vector { size, scalar } => write!(
                 self.out,
                 "vec{}<{}>",
-                back::vector_size_str(size),
+                common::vector_size_str(size),
                 scalar_kind_str(scalar),
             )?,
             TypeInner::Sampler { comparison: false } => {
@@ -530,8 +533,8 @@ impl<W: Write> Writer<W> {
                 write!(
                     self.out,
                     "mat{}x{}<{}>",
-                    back::vector_size_str(columns),
-                    back::vector_size_str(rows),
+                    common::vector_size_str(columns),
+                    common::vector_size_str(rows),
                     scalar_kind_str(scalar)
                 )?;
             }
@@ -580,7 +583,7 @@ impl<W: Write> Writer<W> {
                         self.out,
                         "ptr<{}, vec{}<{}>",
                         space,
-                        back::vector_size_str(size),
+                        common::vector_size_str(size),
                         scalar_kind_str(scalar)
                     )?;
                     if let Some(access) = maybe_access {
@@ -1313,7 +1316,7 @@ impl<W: Write> Writer<W> {
                 write!(self.out, ")")?
             }
             Expression::Splat { size, value } => {
-                let size = back::vector_size_str(size);
+                let size = common::vector_size_str(size);
                 write!(self.out, "vec{size}(")?;
                 write_expression(self, value)?;
                 write!(self.out, ")")?;
@@ -1609,8 +1612,8 @@ impl<W: Write> Writer<W> {
                         write!(
                             self.out,
                             "mat{}x{}<{}>",
-                            back::vector_size_str(columns),
-                            back::vector_size_str(rows),
+                            common::vector_size_str(columns),
+                            common::vector_size_str(rows),
                             scalar_kind_str
                         )?;
                     }
@@ -1622,7 +1625,7 @@ impl<W: Write> Writer<W> {
                             kind,
                             width: convert.unwrap_or(width),
                         };
-                        let vector_size_str = back::vector_size_str(size);
+                        let vector_size_str = common::vector_size_str(size);
                         let scalar_kind_str = scalar_kind_str(scalar);
                         if convert.is_some() {
                             write!(self.out, "vec{vector_size_str}<{scalar_kind_str}>")?;
