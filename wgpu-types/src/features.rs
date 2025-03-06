@@ -1181,6 +1181,18 @@ bitflags_array! {
         /// [`AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN`]: super::AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN
         const EXPERIMENTAL_RAY_HIT_VERTEX_RETURN = 1 << 48;
 
+        /// Enables multiview in mesh shader pipelines
+        ///
+        /// Supported platforms:
+        /// - Vulkan (with [VK_EXT_mesh_shader](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_mesh_shader.html))
+        ///
+        /// Potential Platforms:
+        /// - DX12
+        /// - Metal
+        ///
+        /// This is a native only feature.
+        const EXPERIMENTAL_MESH_SHADER_MULTIVIEW = 1 << 49;
+
         /// Enables support for debugPrintf in WGSL shaders.
         ///
         /// Supported Platforms:
@@ -1190,7 +1202,7 @@ bitflags_array! {
         /// - OpenGL
         ///
         /// This is a native only feature
-        const DEBUG_PRINTF = 1 << 49;
+        const DEBUG_PRINTF = 1 << 50;
     }
 
     /// Features that are not guaranteed to be supported.
