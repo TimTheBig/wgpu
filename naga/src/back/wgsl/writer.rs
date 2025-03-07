@@ -1243,13 +1243,11 @@ impl<W: Write> Writer<W> {
         &mut self,
         module: &Module,
         expr: Handle<crate::Expression>,
+        arena: &crate::Arena<crate::Expression>,
     ) -> BackendResult {
-        self.write_possibly_const_expression(
-            module,
-            expr,
-            &module.global_expressions,
-            |writer, expr| writer.write_const_expression(module, expr),
-        )
+        self.write_possibly_const_expression(module, expr, arena, |writer, expr| {
+            writer.write_const_expression(module, expr, arena)
+        })
     }
 
     fn write_possibly_const_expression<E>(
@@ -1302,7 +1300,7 @@ impl<W: Write> Writer<W> {
                 if constant.name.is_some() {
                     write!(self.out, "{}", self.names[&NameKey::Constant(handle)])?;
                 } else {
-                    self.write_const_expression(module, constant.init)?;
+                    self.write_const_expression(module, constant.init, &module.global_expressions)?;
                 }
             }
             Expression::ZeroValue(ty) => {
@@ -1498,7 +1496,7 @@ impl<W: Write> Writer<W> {
 
                 if let Some(offset) = offset {
                     write!(self.out, ", ")?;
-                    self.write_const_expression(module, offset)?;
+                    self.write_const_expression(module, offset, func_ctx.expressions)?;
                 }
 
                 write!(self.out, ")")?;
@@ -1547,7 +1545,7 @@ impl<W: Write> Writer<W> {
 
                 if let Some(offset) = offset {
                     write!(self.out, ", ")?;
-                    self.write_const_expression(module, offset)?;
+                    self.write_const_expression(module, offset, func_ctx.expressions)?;
                 }
 
                 write!(self.out, ")")?;
@@ -1858,7 +1856,7 @@ impl<W: Write> Writer<W> {
         // Write initializer
         if let Some(init) = global.init {
             write!(self.out, " = ")?;
-            self.write_const_expression(module, init)?;
+            self.write_const_expression(module, init, &module.global_expressions)?;
         }
 
         // End with semicolon
@@ -1882,7 +1880,7 @@ impl<W: Write> Writer<W> {
         self.write_type(module, module.constants[handle].ty)?;
         write!(self.out, " = ")?;
         let init = module.constants[handle].init;
-        self.write_const_expression(module, init)?;
+        self.write_const_expression(module, init, &module.global_expressions)?;
         writeln!(self.out, ";")?;
 
         Ok(())

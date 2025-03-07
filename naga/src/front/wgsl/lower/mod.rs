@@ -3143,7 +3143,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
 
         let offset = args
             .next()
-            .map(|arg| self.expression(arg, &mut ctx.as_global().as_const()))
+            .map(|arg| self.expression(arg, &mut ctx.as_const()))
             .ok()
             .transpose()?;
 
