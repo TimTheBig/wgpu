@@ -149,7 +149,6 @@ struct TypeContext<'a> {
     gctx: proc::GlobalCtx<'a>,
     names: &'a FastHashMap<NameKey, String>,
     access: crate::StorageAccess,
-    binding: Option<&'a super::ResolvedBinding>,
     first_time: bool,
 }
 
@@ -323,7 +322,6 @@ struct TypedGlobalVariable<'a> {
     names: &'a FastHashMap<NameKey, String>,
     handle: Handle<crate::GlobalVariable>,
     usage: valid::GlobalUse,
-    binding: Option<&'a super::ResolvedBinding>,
     reference: bool,
 }
 
@@ -356,7 +354,6 @@ impl TypedGlobalVariable<'_> {
             gctx: self.module.to_ctx(),
             names: self.names,
             access: storage_access,
-            binding: self.binding,
             first_time: false,
         };
 
@@ -1513,7 +1510,6 @@ impl<W: Write> Writer<W> {
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 write!(self.out, "{ty_name} {{}}")?;
@@ -1524,7 +1520,6 @@ impl<W: Write> Writer<W> {
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 write!(self.out, "{ty_name}")?;
@@ -3050,7 +3045,6 @@ impl<W: Write> Writer<W> {
                     gctx: context.module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 write!(self.out, "{ty_name}")?;
@@ -3996,7 +3990,6 @@ impl<W: Write> Writer<W> {
                         gctx: module.to_ctx(),
                         names: &self.names,
                         access: crate::StorageAccess::empty(),
-                        binding: None,
                         first_time: false,
                     };
 
@@ -4052,7 +4045,6 @@ impl<W: Write> Writer<W> {
                                     gctx: module.to_ctx(),
                                     names: &self.names,
                                     access: crate::StorageAccess::empty(),
-                                    binding: None,
                                     first_time: false,
                                 };
                                 writeln!(
@@ -4082,7 +4074,6 @@ impl<W: Write> Writer<W> {
                         gctx: module.to_ctx(),
                         names: &self.names,
                         access: crate::StorageAccess::empty(),
-                        binding: None,
                         first_time: true,
                     };
                     writeln!(self.out, "typedef {ty_name} {name};")?;
@@ -4182,7 +4173,6 @@ template <typename A>
                 gctx: module.to_ctx(),
                 names: &self.names,
                 access: crate::StorageAccess::empty(),
-                binding: None,
                 first_time: false,
             };
             let name = &self.names[&NameKey::Constant(handle)];
@@ -5482,7 +5472,6 @@ template <typename A>
                         gctx: module.to_ctx(),
                         names: &self.names,
                         access: crate::StorageAccess::empty(),
-                        binding: None,
                         first_time: false,
                     };
                     write!(self.out, "{ty_name}")?;
@@ -5500,7 +5489,6 @@ template <typename A>
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 let separator = separate(
@@ -5523,7 +5511,7 @@ template <typename A>
                     names: &self.names,
                     handle,
                     usage: fun_info[handle],
-                    binding: None,
+
                     reference: true,
                 };
                 let separator =
@@ -5568,7 +5556,6 @@ template <typename A>
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 let local_name = &self.names[&NameKey::FunctionLocal(fun_handle, local_handle)];
@@ -5797,7 +5784,6 @@ template <typename A>
                         gctx: module.to_ctx(),
                         names: &self.names,
                         access: crate::StorageAccess::empty(),
-                        binding: None,
                         first_time: false,
                     };
                     let resolved = options.resolve_local_binding(binding, in_mode)?;
@@ -5857,7 +5843,6 @@ template <typename A>
                             gctx: module.to_ctx(),
                             names: &self.names,
                             access: crate::StorageAccess::empty(),
-                            binding: None,
                             first_time: true,
                         };
                         let binding = binding.ok_or_else(|| {
@@ -5958,7 +5943,6 @@ template <typename A>
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
 
@@ -6143,7 +6127,6 @@ template <typename A>
                     names: &self.names,
                     handle,
                     usage,
-                    binding: resolved.as_ref(),
                     reference: true,
                 };
                 let separator = if is_first_argument {
@@ -6356,7 +6339,7 @@ template <typename A>
                         names: &self.names,
                         handle,
                         usage,
-                        binding: None,
+
                         reference: false,
                     };
                     write!(self.out, "{}", back::INDENT)?;
@@ -6484,7 +6467,6 @@ template <typename A>
                     gctx: module.to_ctx(),
                     names: &self.names,
                     access: crate::StorageAccess::empty(),
-                    binding: None,
                     first_time: false,
                 };
                 write!(self.out, "{}{} {}", back::INDENT, ty_name, name)?;
