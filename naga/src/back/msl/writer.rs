@@ -3801,8 +3801,7 @@ impl<W: Write> Writer<W> {
         self.names.clear();
         self.namer.reset(
             module,
-            super::keywords::RESERVED,
-            &[],
+            &super::keywords::RESERVED_SET,
             &[],
             &[CLAMPED_LOD_LOAD_PREFIX],
             &mut self.names,
