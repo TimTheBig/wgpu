@@ -40,6 +40,7 @@ use alloc::{borrow::ToOwned, format, string::String, vec, vec::Vec};
 use core::{convert::TryInto, mem, num::NonZeroU32};
 use std::path::PathBuf;
 
+use half::f16;
 use petgraph::graphmap::GraphMap;
 
 use super::atomic_upgrade::Upgrades;
@@ -84,6 +85,7 @@ pub const SUPPORTED_EXTENSIONS: &[&str] = &[
     "SPV_KHR_multiview",
     "SPV_KHR_non_semantic_info",
     "SPV_EXT_shader_atomic_float_add",
+    "SPV_KHR_16bit_storage",
 ];
 pub const SUPPORTED_EXT_SETS: &[&str] = &["GLSL.std.450", "NonSemantic.DebugPrintf"];
 
@@ -5611,6 +5613,9 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
             }) => {
                 let low = self.next()?;
                 match width {
+                    // https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Literal
+                    // If a numeric type’s bit width is less than 32-bits, the value appears in the low-order bits of the word.
+                    2 => crate::Literal::F16(f16::from_bits(low as u16)),
                     4 => crate::Literal::F32(f32::from_bits(low)),
                     8 => {
                         inst.expect(5)?;
