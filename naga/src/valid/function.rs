@@ -335,7 +335,7 @@ impl super::Validator {
                         .with_span_handle(expr, context.expressions)
                 })?;
             let arg_inner = &context.types[arg.ty].inner;
-            if !ty.equivalent(arg_inner, context.types) {
+            if !ty.non_struct_equivalent(arg_inner, context.types) {
                 return Err(CallError::ArgumentType {
                     index,
                     required: arg.ty,
@@ -549,7 +549,7 @@ impl super::Validator {
                     // atomic we're operating on.
                     let compare_inner =
                         context.resolve_type(compare, &self.valid_expression_set)?;
-                    if !compare_inner.equivalent(value_inner, context.types) {
+                    if !compare_inner.non_struct_equivalent(value_inner, context.types) {
                         log::error!(
                             "Atomic exchange comparison has a different type from the value"
                         );
@@ -588,7 +588,7 @@ impl super::Validator {
                     // The result expression must be a scalar of the same type as the
                     // atomic we're operating on.
                     let result_inner = &context.types[result_ty].inner;
-                    if !result_inner.equivalent(value_inner, context.types) {
+                    if !result_inner.non_struct_equivalent(value_inner, context.types) {
                         return Err(AtomicError::ResultTypeMismatch(result)
                             .with_span_handle(result, context.expressions)
                             .into_other());
@@ -966,7 +966,7 @@ impl super::Validator {
                     let okay = match (value_ty, expected_ty) {
                         (None, None) => true,
                         (Some(value_inner), Some(expected_inner)) => {
-                            value_inner.equivalent(expected_inner, context.types)
+                            value_inner.non_struct_equivalent(expected_inner, context.types)
                         }
                         (_, _) => false,
                     };
@@ -1446,7 +1446,7 @@ impl super::Validator {
                         base: ty,
                         space: AddressSpace::WorkGroup,
                     };
-                    if !expected_pointer_inner.equivalent(pointer_inner, context.types) {
+                    if !expected_pointer_inner.non_struct_equivalent(pointer_inner, context.types) {
                         return Err(FunctionError::WorkgroupUniformLoadInvalidPointer(pointer)
                             .with_span_static(span, "WorkGroupUniformLoad"));
                     }
@@ -1654,7 +1654,7 @@ impl super::Validator {
         if let Some(init) = var.init {
             let decl_ty = &gctx.types[var.ty].inner;
             let init_ty = fun_info[init].ty.inner_with(gctx.types);
-            if !decl_ty.equivalent(init_ty, gctx.types) {
+            if !decl_ty.non_struct_equivalent(init_ty, gctx.types) {
                 return Err(LocalVariableError::InitializerType);
             }
 
