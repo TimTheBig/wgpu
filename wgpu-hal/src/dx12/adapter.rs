@@ -649,6 +649,7 @@ impl crate::Adapter for super::Adapter {
         };
 
         let device = super::Device::new(
+            self.raw.clone(),
             self.device.clone(),
             queue.clone(),
             features,
