@@ -96,7 +96,8 @@ impl Writer {
             saved_cached: CachedExpressions::default(),
             ext_inst_ids,
             temp_list: Vec::new(),
-            ray_get_intersection_function: None,
+            ray_get_committed_intersection_function: None,
+            ray_get_candidate_intersection_function: None,
         })
     }
 
@@ -151,7 +152,8 @@ impl Writer {
             saved_cached: take(&mut self.saved_cached).recycle(),
             ext_inst_ids,
             temp_list: take(&mut self.temp_list).recycle(),
-            ray_get_intersection_function: None,
+            ray_get_candidate_intersection_function: None,
+            ray_get_committed_intersection_function: None,
         };
 
         *self = fresh;
