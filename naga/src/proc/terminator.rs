@@ -39,12 +39,12 @@ pub fn ensure_block_returns(block: &mut crate::Block) {
             | S::Atomic { .. }
             | S::ImageAtomic { .. }
             | S::WorkGroupUniformLoad { .. }
-            | S::Barrier(_)
             | S::DebugPrintf { .. }
             | S::SubgroupBallot { .. },
             | S::SubgroupCollectiveOperation { .. }
             | S::SubgroupGather { .. }
-            | S::Barrier(_))
+            | S::ControlBarrier(_)
+            | S::MemoryBarrier(_)),
         )
         | None => block.push(S::Return { value: None }, Default::default()),
     }
