@@ -428,7 +428,6 @@ fn check_targets(input: &Input, module: &mut naga::Module, source_code: Option<&
             );
         });
 
-    #[cfg(feature = "compact")]
     let info = {
         naga::compact::compact(module);
 
