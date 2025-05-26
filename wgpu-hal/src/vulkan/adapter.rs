@@ -757,7 +757,8 @@ impl PhysicalDeviceFeatures {
                         | vk::SubgroupFeatureFlags::ARITHMETIC
                         | vk::SubgroupFeatureFlags::BALLOT
                         | vk::SubgroupFeatureFlags::SHUFFLE
-                        | vk::SubgroupFeatureFlags::SHUFFLE_RELATIVE,
+                        | vk::SubgroupFeatureFlags::SHUFFLE_RELATIVE
+                        | vk::SubgroupFeatureFlags::QUAD,
                 )
             {
                 features.set(
@@ -1988,6 +1989,7 @@ impl super::Adapter {
                 capabilities.push(spv::Capability::GroupNonUniformBallot);
                 capabilities.push(spv::Capability::GroupNonUniformShuffle);
                 capabilities.push(spv::Capability::GroupNonUniformShuffleRelative);
+                capabilities.push(spv::Capability::GroupNonUniformQuad);
             }
 
             if features.intersects(
