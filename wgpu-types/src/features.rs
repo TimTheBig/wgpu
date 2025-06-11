@@ -1218,6 +1218,15 @@ bitflags_array! {
         /// This is a native only feature.
         const EXPERIMENTAL_MESH_SHADER_MULTIVIEW = 1 << 49;
 
+        /// Allows usage of additional vertex formats in [BlasTriangleGeometrySizeDescriptor::vertex_format]
+        ///
+        /// Supported platforms
+        /// - Vulkan
+        /// - DX12
+        ///
+        /// [BlasTriangleGeometrySizeDescriptor::vertex_format]: super::BlasTriangleGeometrySizeDescriptor
+        const EXTENDED_ACCELERATION_STRUCTURE_VERTEX_FORMATS = 1 << 50;
+
         /// Enables support for debugPrintf in WGSL shaders.
         ///
         /// Supported Platforms:
@@ -1227,7 +1236,7 @@ bitflags_array! {
         /// - OpenGL
         ///
         /// This is a native only feature
-        const DEBUG_PRINTF = 1 << 50;
+        const DEBUG_PRINTF = 1 << 51;
     }
 
     /// Features that are not guaranteed to be supported.
@@ -1494,6 +1503,13 @@ impl Features {
         let mut formats = Vec::new();
         if self.contains(Self::EXPERIMENTAL_RAY_TRACING_ACCELERATION_STRUCTURE) {
             formats.push(VertexFormat::Float32x3);
+        }
+        if self.contains(Self::EXTENDED_ACCELERATION_STRUCTURE_VERTEX_FORMATS) {
+            formats.push(VertexFormat::Float32x2);
+            formats.push(VertexFormat::Float16x2);
+            formats.push(VertexFormat::Float16x4);
+            formats.push(VertexFormat::Snorm16x2);
+            formats.push(VertexFormat::Snorm16x4);
         }
         formats
     }
