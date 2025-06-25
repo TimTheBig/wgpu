@@ -1255,6 +1255,16 @@ bitflags_array! {
         ///
         /// This is a native only feature
         const DEBUG_PRINTF = 1 << 52;
+
+        /// Enables creating shader modules from DirectX HLSL or DXIL shaders (unsafe)
+        ///
+        /// HLSL/DXIL data is not parsed or interpreted in any way
+        ///
+        /// Supported platforms:
+        /// - DX12
+        ///
+        /// This is a native only feature.
+        const HLSL_DXIL_SHADER_PASSTHROUGH = 1 << 53;
     }
 
     /// Features that are not guaranteed to be supported.
