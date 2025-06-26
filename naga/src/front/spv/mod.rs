@@ -38,7 +38,6 @@ pub use error::Error;
 
 use alloc::{borrow::ToOwned, format, string::String, vec, vec::Vec};
 use core::{convert::TryInto, mem, num::NonZeroU32};
-use std::path::PathBuf;
 
 use half::f16;
 use petgraph::graphmap::GraphMap;
@@ -46,6 +45,7 @@ use petgraph::graphmap::GraphMap;
 use super::atomic_upgrade::Upgrades;
 use crate::{
     arena::{Arena, Handle, UniqueArena},
+    path_like::PathLikeOwned,
     proc::{Alignment, Layouter},
     FastHashMap, FastHashSet, FastIndexMap,
 };
@@ -383,7 +383,7 @@ pub struct Options {
     pub adjust_coordinate_space: bool,
     /// Only allow shaders with the known set of capabilities.
     pub strict_capabilities: bool,
-    pub block_ctx_dump_prefix: Option<PathBuf>,
+    pub block_ctx_dump_prefix: Option<PathLikeOwned>,
 }
 
 impl Default for Options {
