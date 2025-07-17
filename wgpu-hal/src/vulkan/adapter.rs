@@ -1704,7 +1704,7 @@ impl super::Instance {
         };
         let queue_flags = queue_families.first()?.queue_flags;
         if !queue_flags.contains(vk::QueueFlags::GRAPHICS) {
-            log::warn!("The first queue only exposes {:?}", queue_flags);
+            log::warn!("The first queue only exposes {queue_flags:?}");
             return None;
         }
 
@@ -1832,10 +1832,10 @@ impl super::Adapter {
             });
 
         if !unsupported_extensions.is_empty() {
-            log::warn!("Missing extensions: {:?}", unsupported_extensions);
+            log::warn!("Missing extensions: {unsupported_extensions:?}");
         }
 
-        log::debug!("Supported extensions: {:?}", supported_extensions);
+        log::debug!("Supported extensions: {supported_extensions:?}");
         supported_extensions
     }
 
@@ -2524,7 +2524,7 @@ impl crate::Adapter for super::Adapter {
                 Ok(true) => (),
                 Ok(false) => return None,
                 Err(e) => {
-                    log::error!("get_physical_device_surface_support: {}", e);
+                    log::error!("get_physical_device_surface_support: {e}");
                     return None;
                 }
             }
@@ -2539,7 +2539,7 @@ impl crate::Adapter for super::Adapter {
             } {
                 Ok(caps) => caps,
                 Err(e) => {
-                    log::error!("get_physical_device_surface_capabilities: {}", e);
+                    log::error!("get_physical_device_surface_capabilities: {e}");
                     return None;
                 }
             }
@@ -2573,7 +2573,7 @@ impl crate::Adapter for super::Adapter {
             } {
                 Ok(present_modes) => present_modes,
                 Err(e) => {
-                    log::error!("get_physical_device_surface_present_modes: {}", e);
+                    log::error!("get_physical_device_surface_present_modes: {e}");
                     // Per definition of `SurfaceCapabilities`, there must be at least one present mode.
                     return None;
                 }
@@ -2589,7 +2589,7 @@ impl crate::Adapter for super::Adapter {
             } {
                 Ok(formats) => formats,
                 Err(e) => {
-                    log::error!("get_physical_device_surface_formats: {}", e);
+                    log::error!("get_physical_device_surface_formats: {e}");
                     // Per definition of `SurfaceCapabilities`, there must be at least one present format.
                     return None;
                 }
