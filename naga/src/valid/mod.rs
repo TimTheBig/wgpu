@@ -170,9 +170,11 @@ bitflags::bitflags! {
 
         /// Support for 16-bit floating-point types.
         const SHADER_FLOAT16 = 1 << 26;
+        /// Support for [`ImageClass::External`]
+        const TEXTURE_EXTERNAL = 1 << 27;
 
         /// Support for `debugPrintf`
-        const DEBUG_PRINTF = 1 << 27;
+        const DEBUG_PRINTF = 1 << 28;
     }
 }
 
