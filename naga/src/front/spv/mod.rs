@@ -83,6 +83,7 @@ pub const SUPPORTED_CAPABILITIES: &[spirv::Capability] = &[
     spirv::Capability::GroupNonUniformBallot,
     spirv::Capability::GroupNonUniformShuffle,
     spirv::Capability::GroupNonUniformShuffleRelative,
+    spirv::Capability::RuntimeDescriptorArray,
     // tricky ones
     spirv::Capability::UniformBufferArrayDynamicIndexing,
     spirv::Capability::StorageBufferArrayDynamicIndexing,
@@ -92,6 +93,7 @@ pub const SUPPORTED_EXTENSIONS: &[&str] = &[
     "SPV_KHR_vulkan_memory_model",
     "SPV_KHR_multiview",
     "SPV_KHR_non_semantic_info",
+    "SPV_EXT_descriptor_indexing",
     "SPV_EXT_shader_atomic_float_add",
     "SPV_KHR_16bit_storage",
 ];
