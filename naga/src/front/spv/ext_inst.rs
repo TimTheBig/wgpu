@@ -71,7 +71,7 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
 
         block.extend(emitter.finish(ctx.expressions));
 
-        let mut arguments = Vec::with_capacity(inst.wc as usize - (base_wc as usize + 1));
+        let mut arguments = std::vec::Vec::with_capacity(inst.wc as usize - (base_wc as usize + 1));
         for _ in 0..arguments.capacity() {
             let arg_id = self.next()?;
             let lexp = self.lookup_expression.lookup(arg_id)?;
@@ -164,12 +164,10 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
             Glo::UnpackHalf2x16 => Mf::Unpack2x16float,
             Glo::UnpackUnorm2x16 => Mf::Unpack2x16unorm,
             Glo::UnpackSnorm2x16 => Mf::Unpack2x16snorm,
-            Glo::FindILsb => Mf::FindLsb,
-            Glo::FindUMsb | Glo::FindSMsb => Mf::FindMsb,
+            Glo::FindILsb => Mf::FirstTrailingBit,
+            Glo::FindUMsb | Glo::FindSMsb => Mf::FirstLeadingBit,
             // TODO: https://github.com/gfx-rs/naga/issues/2526
-            Glo::Modf | Glo::Frexp => {
-                return Err(Error::UnsupportedExtInst(ext_inst.inst_id, ext_name))
-            }
+            Glo::Modf | Glo::Frexp => return Err(Error::UnsupportedExtInst(ext_inst.inst_id, ext_name)),
             Glo::IMix
             | Glo::PackDouble2x32
             | Glo::UnpackDouble2x32
