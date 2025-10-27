@@ -115,6 +115,7 @@ pub struct SpirvOutParameters {
     #[serde(deserialize_with = "deserialize_binding_map")]
     pub binding_map: naga::back::spv::BindingMap,
     pub use_storage_input_output_16: bool,
+    pub emit_debug_printf: bool,
 }
 impl Default for SpirvOutParameters {
     fn default() -> Self {
@@ -128,6 +129,7 @@ impl Default for SpirvOutParameters {
             separate_entry_points: false,
             use_storage_input_output_16: true,
             binding_map: naga::back::spv::BindingMap::default(),
+            emit_debug_printf: false,
         }
     }
 }
@@ -146,14 +148,24 @@ impl SpirvOutParameters {
         );
         flags.set(spv::WriterFlags::FORCE_POINT_SIZE, self.force_point_size);
         flags.set(spv::WriterFlags::CLAMP_FRAG_DEPTH, self.clamp_frag_depth);
+        flags.set(spv::WriterFlags::EMIT_DEBUG_PRINTF, self.emit_debug_printf);
+
+        let capabilities = if self.capabilities.is_empty() {
+            None
+        } else {
+            let mut capabilities = self.capabilities.clone();
+            if self.emit_debug_printf {
+                // needed for glsl std lib import
+                capabilities.insert(spv::Capability::Linkage);
+            }
+
+            Some(capabilities)
+        };
+
         naga::back::spv::Options {
             lang_version: (self.version.0, self.version.1),
             flags,
-            capabilities: if self.capabilities.is_empty() {
-                None
-            } else {
-                Some(self.capabilities.clone())
-            },
+            capabilities,
             bounds_check_policies,
             fake_missing_bindings: true,
             binding_map: self.binding_map.clone(),

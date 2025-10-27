@@ -1,1 +1,16 @@
 targets = "SPIRV | GLSL | HLSL | WGSL"
+
+god_mode = true
+
+[spv]
+version = [1, 1]
+capabilities = ["Linkage"]
+emit_debug_printf = true
+
+[wgsl]
+emit_debug_printf = true
+
+[glsl]
+version = { Desktop = 450 }
+writer_flags = "EMIT_DEBUG_PRINTF"
+zero_initialize_workgroup_memory = true
