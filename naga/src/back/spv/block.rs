@@ -1028,7 +1028,7 @@ impl BlockContext<'_> {
 
                             let max_id = self.gen_id();
                             block.body.push(Instruction::ext_inst(
-                                self.writer.gl450_ext_inst_id,
+                                self.writer.extension_inst_import("GLSL.std.450"),
                                 max_op,
                                 result_type_id,
                                 max_id,
@@ -1036,7 +1036,7 @@ impl BlockContext<'_> {
                             ));
 
                             MathOp::Custom(Instruction::ext_inst(
-                                self.writer.gl450_ext_inst_id,
+                                self.writer.extension_inst_import("GLSL.std.450"),
                                 min_op,
                                 result_type_id,
                                 id,
@@ -1390,12 +1390,12 @@ impl BlockContext<'_> {
 
                         let msb_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
-                            self.writer.gl450_ext_inst_id,
+                            self.writer.extension_inst_import("GLSL.std.450"),
                             if width != 4 {
                                 spirv::GLOp::FindILsb
                             } else {
                                 spirv::GLOp::FindUMsb
-                            } as u32,
+                            },
                             int_type_id,
                             msb_id,
                             &[arg0_id],
@@ -1447,8 +1447,8 @@ impl BlockContext<'_> {
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
-                            self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin as u32,
+                            self.writer.extension_inst_import("GLSL.std.450"),
+                            spirv::GLOp::UMin,
                             u32_type,
                             offset_id,
                             &[arg1_id, width_constant],
@@ -1467,8 +1467,8 @@ impl BlockContext<'_> {
                         // c = min(count, tmp)
                         let count_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
-                            self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin as u32,
+                            self.writer.extension_inst_import("GLSL.std.450"),
+                            spirv::GLOp::UMin,
                             u32_type,
                             count_id,
                             &[arg2_id, max_count_id],
@@ -1497,8 +1497,8 @@ impl BlockContext<'_> {
                         // o = min(offset, w)
                         let offset_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
-                            self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin as u32,
+                            self.writer.extension_inst_import("GLSL.std.450"),
+                            spirv::GLOp::UMin,
                             u32_type,
                             offset_id,
                             &[arg2_id, width_constant],
@@ -1517,8 +1517,8 @@ impl BlockContext<'_> {
                         // c = min(count, tmp)
                         let count_id = self.gen_id();
                         block.body.push(Instruction::ext_inst(
-                            self.writer.gl450_ext_inst_id,
-                            spirv::GLOp::UMin as u32,
+                            self.writer.extension_inst_import("GLSL.std.450"),
+                            spirv::GLOp::UMin,
                             u32_type,
                             count_id,
                             &[arg3_id, max_count_id],
@@ -2010,7 +2010,7 @@ impl BlockContext<'_> {
 
                 let clamp_id = self.gen_id();
                 block.body.push(Instruction::ext_inst(
-                    self.writer.gl450_ext_inst_id,
+                    self.writer.extension_inst_import("GLSL.std.450"),
                     spirv::GLOp::FClamp,
                     expr_type_id,
                     clamp_id,
@@ -2673,7 +2673,7 @@ impl BlockContext<'_> {
 
             let clamp_id = self.gen_id();
             block.body.push(Instruction::ext_inst(
-                self.writer.gl450_ext_inst_id,
+                self.writer.extension_inst_import("GLSL.std.450"),
                 clamp_op,
                 wide_vector_type_id,
                 clamp_id,
@@ -2767,7 +2767,7 @@ impl BlockContext<'_> {
 
                 let clamp_id = self.gen_id();
                 block.body.push(Instruction::ext_inst(
-                    self.writer.gl450_ext_inst_id,
+                    self.writer.extension_inst_import("GLSL.std.450"),
                     clamp_op,
                     result_type_id,
                     clamp_id,
@@ -3655,7 +3655,7 @@ impl BlockContext<'_> {
                         let set_id = self.writer.extension_inst_import("NonSemantic.DebugPrintf");
                         block.body.push(Instruction::ext_inst(
                             set_id,
-                            1,
+                            spirv::GLOp::Round,
                             self.writer.void_type,
                             id,
                             &self.temp_list,

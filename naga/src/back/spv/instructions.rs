@@ -163,12 +163,12 @@ impl super::Instruction {
         id: Word,
         operands: &[Word],
     ) -> Self {
-        Self::ext_inst(set_id, op as Word, result_type_id, id, operands)
+        Self::ext_inst(set_id, op, result_type_id, id, operands)
     }
 
     pub(super) fn ext_inst(
         set_id: Word,
-        op: Word,
+        op: spirv::GLOp,
         result_type_id: Word,
         id: Word,
         operands: &[Word],
@@ -177,7 +177,7 @@ impl super::Instruction {
         instruction.set_type(result_type_id);
         instruction.set_result(id);
         instruction.add_operand(set_id);
-        instruction.add_operand(op);
+        instruction.add_operand(op as u32);
         for operand in operands {
             instruction.add_operand(*operand)
         }

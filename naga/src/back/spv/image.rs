@@ -924,7 +924,7 @@ impl BlockContext<'_> {
             // Clamp the coords to the calculated margins
             let clamped_coords_id = self.gen_id();
             block.body.push(Instruction::ext_inst(
-                self.writer.gl450_ext_inst_id,
+                self.writer.extension_inst_import("GLSL.std.450"),
                 spirv::GLOp::NClamp,
                 vec2f_type_id,
                 clamped_coords_id,

@@ -169,6 +169,7 @@ impl SpirvOutParameters {
 #[serde(default)]
 pub struct WgslOutParameters {
     pub explicit_types: bool,
+    pub emit_debug_printf: bool,
 }
 impl From<&WgslOutParameters> for naga::back::wgsl::WriterFlags {
     fn from(value: &WgslOutParameters) -> Self {

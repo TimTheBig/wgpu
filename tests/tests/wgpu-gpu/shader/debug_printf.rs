@@ -1,6 +1,6 @@
 use wgpu::{
     include_wgsl, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipelineDescriptor,
-    Features, Limits, Maintain, PipelineLayoutDescriptor,
+    Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType
 };
 
 use wgpu_test::{gpu_test, GpuTestConfiguration, TestParameters};
@@ -30,8 +30,10 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
             .create_compute_pipeline(&ComputePipelineDescriptor {
                 label: Some("debugprintf"),
                 layout: Some(&pll),
+                compilation_options: PipelineCompilationOptions::default(),
                 module: &sm,
-                entry_point: "main",
+                entry_point: Some("main"),
+                cache: None,
             });
 
         // -- Run test --
@@ -47,5 +49,5 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
 
         ctx.queue.submit(Some(encoder.finish()));
 
-        ctx.device.poll(Maintain::Wait);
+        ctx.device.poll(PollType::wait_indefinitely()).unwrap();
     });

@@ -258,6 +258,7 @@ impl Version {
     fn supports_pack_unpack_half_2x16(&self) -> bool {
         *self >= Version::Desktop(420) || *self >= Version::new_gles(300)
     }
+    // todo supports_debug_printf Desktop(450)
 }
 
 impl PartialOrd for Version {

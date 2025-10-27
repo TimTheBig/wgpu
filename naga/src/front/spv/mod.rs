@@ -29,7 +29,6 @@ This value then gets used instead of `OpLoad` result later on.
 
 mod convert;
 mod error;
-mod ext_inst;
 mod function;
 mod image;
 mod null;
@@ -586,8 +585,8 @@ pub struct Frontend<I> {
     state: ModuleState,
     layouter: Layouter,
     temp_bytes: Vec<u8>,
-    ext_inst_imports: FastHashMap<spirv::Word, &'static str>,
     strings: FastHashMap<spirv::Word, String>,
+    ext_glsl_id: Option<spirv::Word>,
     future_decor: FastHashMap<spirv::Word, Decoration>,
     future_member_decor: FastHashMap<(spirv::Word, MemberIndex), Decoration>,
     lookup_member: FastHashMap<(Handle<crate::Type>, MemberIndex), LookupMember>,
@@ -654,8 +653,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
             state: ModuleState::Empty,
             layouter: Layouter::default(),
             temp_bytes: Vec::new(),
-            ext_inst_imports: FastHashMap::default(),
             strings: FastHashMap::default(),
+            ext_glsl_id: None,
             future_decor: FastHashMap::default(),
             future_member_decor: FastHashMap::default(),
             handle_sampling: FastHashMap::default(),
@@ -4663,10 +4662,10 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                 | S::Atomic { .. }
                 | S::ImageAtomic { .. }
                 | S::RayQuery { .. }
-                | S::DebugPrintf { .. } => {}
                 | S::SubgroupBallot { .. }
                 | S::SubgroupCollectiveOperation { .. }
-                | S::SubgroupGather { .. } => {}
+                | S::SubgroupGather { .. }
+                | S::DebugPrintf { .. } => {}
                 S::Call {
                     function: ref mut callee,
                     ref arguments,
@@ -4917,11 +4916,10 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
         if left != 0 {
             return Err(Error::InvalidOperand);
         }
-        if let Some(ext) = SUPPORTED_EXT_SETS.iter().find(|ext| **ext == name.as_str()) {
-            self.ext_inst_imports.insert(result_id, ext);
-        } else {
+        if !SUPPORTED_EXT_SETS.contains(&name.as_str()) {
             return Err(Error::UnsupportedExtSet(name));
         }
+        self.ext_glsl_id = Some(result_id);
         Ok(())
     }
 
@@ -5040,9 +5038,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
     fn parse_string(&mut self, inst: Instruction) -> Result<(), Error> {
         self.switch(ModuleState::Source, inst.op)?;
         inst.expect_at_least(3)?;
-        let id = self.next()?;
-        let (name, _) = self.next_string(inst.wc - 2)?;
-        self.strings.entry(id).or_insert(name);
+        let _id = self.next()?;
+        let (_name, _) = self.next_string(inst.wc - 2)?;
         Ok(())
     }
 

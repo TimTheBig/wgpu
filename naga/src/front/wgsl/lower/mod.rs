@@ -2120,7 +2120,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                     ast::Literal::Number(Number::AbstractFloat(f)) => ir::Literal::AbstractFloat(f),
                     ast::Literal::Bool(b) => ir::Literal::Bool(b),
                     ast::Literal::String(_) => {
-                        return Err(Error::UnexpectedStringLiteral(span));
+                        return Err(Box::new(Error::UnexpectedStringLiteral(span)));
                     }
                 };
                 let handle = ctx.interrupt_emitter(ir::Expression::Literal(literal), span)?;
@@ -3057,14 +3057,14 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                                 ast::Expression::Literal(ast::Literal::String(format)) => {
                                     format.to_string()
                                 }
-                                _ => return Err(Error::Internal("Expected format string")),
+                                _ => return Err(Box::new(Error::Internal("Expected format string"))),
                             };
 
                             let arguments = arguments
                                 .iter()
                                 .skip(1)
                                 .map(|&arg| self.expression(arg, ctx))
-                                .collect::<Result<Vec<_>, _>>()?;
+                                .collect::<Result<Vec<_>>>()?;
                             let rctx = ctx.runtime_expression_ctx(span)?;
 
                             rctx.block

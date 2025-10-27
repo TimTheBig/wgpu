@@ -367,7 +367,7 @@ pub(crate) enum Error<'a> {
         limit: u8,
     },
     PipelineConstantIDValue(Span),
-    /// String literals are only used with debugPrintf
+    /// String literals are only used with debugPrintf, for now...
     UnexpectedStringLiteral(Span),
     NotBool(Span),
     ConstAssertFailed(Span),

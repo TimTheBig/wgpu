@@ -322,8 +322,6 @@ fn write_output_hlsl(
     frag_ep: Option<naga::back::hlsl::FragmentEntryPoint>,
 ) {
     use naga::back::hlsl::{self, WriterFlags};
-    use core::fmt::Write as _;
-    use naga::back::hlsl;
 
     println!("generating HLSL");
 
