@@ -17,6 +17,7 @@
         (
             entry_point:"foo_compute",
             target_profile:"cs_5_1",
+            debug_printf:false,
         ),
     ],
 )

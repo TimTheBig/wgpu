@@ -7,6 +7,7 @@
         (
             entry_point:"cull_fetch_depth",
             target_profile:"cs_5_1",
+            debug_printf:false,
         ),
     ],
 )

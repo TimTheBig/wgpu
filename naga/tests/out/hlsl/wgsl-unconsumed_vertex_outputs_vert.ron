@@ -3,6 +3,7 @@
         (
             entry_point:"vs_main",
             target_profile:"vs_5_1",
+            debug_printf:false,
         ),
     ],
     fragment:[

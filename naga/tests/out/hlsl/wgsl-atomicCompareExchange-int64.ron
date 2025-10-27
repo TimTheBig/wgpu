@@ -7,10 +7,12 @@
         (
             entry_point:"test_atomic_compare_exchange_i64_",
             target_profile:"cs_6_6",
+            debug_printf:false,
         ),
         (
             entry_point:"test_atomic_compare_exchange_u64_",
             target_profile:"cs_6_6",
+            debug_printf:false,
         ),
     ],
 )
