@@ -15,10 +15,10 @@ use wgpu::{
 
 use wgpu_test::{GpuTestInitializer, TestingContext};
 
-pub mod debug_printf;
 pub mod array_size_overrides;
 pub mod compilation_messages;
 pub mod data_builtins;
+pub mod debug_printf;
 pub mod numeric_builtins;
 pub mod struct_layout;
 pub mod workgroup_size_overrides;

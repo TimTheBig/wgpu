@@ -3057,7 +3057,9 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                                 ast::Expression::Literal(ast::Literal::String(format)) => {
                                     format.to_string()
                                 }
-                                _ => return Err(Box::new(Error::Internal("Expected format string"))),
+                                _ => {
+                                    return Err(Box::new(Error::Internal("Expected format string")))
+                                }
                             };
 
                             let arguments = arguments

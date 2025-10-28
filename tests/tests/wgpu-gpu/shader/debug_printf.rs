@@ -1,6 +1,6 @@
 use wgpu::{
     include_wgsl, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipelineDescriptor,
-    Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType
+    Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType,
 };
 
 use wgpu_test::{gpu_test, GpuTestConfiguration, TestParameters};
