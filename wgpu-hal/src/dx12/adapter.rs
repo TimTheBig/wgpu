@@ -23,11 +23,7 @@ use crate::{
         self,
         dxgi::{factory::DxgiAdapter, result::HResult},
     },
-    dx12::{
-        dcomp::DCompLib,
-        shader_compilation::CompilerContainer,
-        SurfaceTarget,
-    },
+    dx12::{dcomp::DCompLib, shader_compilation::CompilerContainer, SurfaceTarget},
 };
 
 impl Drop for super::Adapter {

@@ -26,8 +26,7 @@ use crate::{
         dxgi::{name::ObjectExt, result::HResult},
     },
     dx12::{
-        borrow_optional_interface_temporarily,
-        shader_compilation::CompilerContainer,
+        borrow_optional_interface_temporarily, shader_compilation::CompilerContainer,
         suballocation, DCompLib, DynamicStorageBufferOffsets, Event, ShaderCacheKey,
         ShaderCacheValue,
     },
