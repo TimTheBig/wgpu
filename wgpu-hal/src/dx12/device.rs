@@ -1474,9 +1474,10 @@ impl crate::Device for super::Device {
             },
             bind_group_infos,
             naga_options: hlsl::Options {
-                flags: if let Fxc(_) = self.compiler_container {
+                flags: if let shader_compilation::CompilerContainer::Fxc(_) = self.compiler_container {
                         hlsl::WriterFlags::EMIT_DEBUG_PRINTF
                     } else {
+                        log::warn!("could not enable `EMIT_DEBUG_PRINTF` as the DXC dx12 compiler doesn't support printf");
                         // DXC doesn't support printf: https://github.com/microsoft/DirectXShaderCompiler/issues/357
                         hlsl::WriterFlags::empty()
                     },
