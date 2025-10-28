@@ -571,7 +571,7 @@ impl super::Adapter {
 
         // DXC lacks support for printf, so only enable it on FXC
         // see https://github.com/microsoft/DirectXShaderCompiler/issues/357
-        if matches!(compiler_container, shader_compilation::CompilerContainer::Fxc(_)) {
+        if matches!(*compiler_container, shader_compilation::CompilerContainer::Fxc(_)) {
             features.set(wgt::Features::DEBUG_PRINTF, true);
             log::warn!("could not enable `EMIT_DEBUG_PRINTF` as the DXC dx12 compiler doesn't support printf");
         }
