@@ -71,7 +71,7 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
 
         block.extend(emitter.finish(ctx.expressions));
 
-        let mut arguments = std::vec::Vec::with_capacity(inst.wc as usize - (base_wc as usize + 1));
+        let mut arguments = alloc::vec::Vec::with_capacity(inst.wc as usize - (base_wc as usize + 1));
         for _ in 0..arguments.capacity() {
             let arg_id = self.next()?;
             let lexp = self.lookup_expression.lookup(arg_id)?;

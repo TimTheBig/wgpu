@@ -473,7 +473,7 @@ impl<W> Writer<'_, W> {
             .functions
             .iter()
             .map(|(_, f)| &f.body)
-            .chain(std::iter::once(&entry_point.function.body))
+            .chain(core::iter::once(&entry_point.function.body))
         {
             for statement in block.iter() {
                 match *statement {

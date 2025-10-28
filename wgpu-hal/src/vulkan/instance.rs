@@ -826,7 +826,7 @@ impl super::Instance {
                     } {
                         Ok(e) => e,
                         Err(e) => {
-                            log::warn!( "enumerate_instance_extension_properties() failed for validation layer: {:?}", e );
+                            log::warn!("enumerate_instance_extension_properties() failed for validation layer: {e:?}");
                             break 'validation_exts;
                         }
                     };
