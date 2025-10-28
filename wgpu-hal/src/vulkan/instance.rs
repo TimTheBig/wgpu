@@ -9,7 +9,10 @@ use core::{
 use std::thread;
 
 use arrayvec::ArrayVec;
-use ash::{ext, khr, vk::{self, MAX_EXTENSION_NAME_SIZE}};
+use ash::{
+    ext, khr,
+    vk::{self, MAX_EXTENSION_NAME_SIZE},
+};
 use parking_lot::RwLock;
 
 unsafe extern "system" fn debug_utils_messenger_callback(
@@ -818,9 +821,9 @@ impl super::Instance {
                 }
                 let validation_features_name = vk::EXT_VALIDATION_FEATURES_NAME;
                 'validation_exts: {
-                    let validation_extensions = match unsafe { entry
-                        .enumerate_instance_extension_properties(Some(validation_layer_name)) }
-                    {
+                    let validation_extensions = match unsafe {
+                        entry.enumerate_instance_extension_properties(Some(validation_layer_name))
+                    } {
                         Ok(e) => e,
                         Err(e) => {
                             log::warn!( "enumerate_instance_extension_properties() failed for validation layer: {:?}", e );
@@ -829,10 +832,19 @@ impl super::Instance {
                     };
 
                     let extension_found = validation_extensions.iter().any(|inst_ext| {
-                        CStr::from_bytes_until_nul((
-                            // SAFETY: Size and rules of the [i8] and [u8] are the same
-                            unsafe { core::mem::transmute::<[i8; MAX_EXTENSION_NAME_SIZE], [u8; MAX_EXTENSION_NAME_SIZE]>(inst_ext.extension_name) }
-                        ).as_slice()).ok()
+                        CStr::from_bytes_until_nul(
+                            (
+                                // SAFETY: Size and rules of the [i8] and [u8] are the same
+                                unsafe {
+                                    core::mem::transmute::<
+                                        [i8; MAX_EXTENSION_NAME_SIZE],
+                                        [u8; MAX_EXTENSION_NAME_SIZE],
+                                    >(inst_ext.extension_name)
+                                }
+                            )
+                            .as_slice(),
+                        )
+                        .ok()
                             == Some(validation_features_name)
                     });
                     if !extension_found {
@@ -844,8 +856,10 @@ impl super::Instance {
                     validation_feature_list.push(vk::ValidationFeatureEnableEXT::DEBUG_PRINTF);
                 }
 
-                validation_features = Some(vk::ValidationFeaturesEXT::default()
-                    .enabled_validation_features(&validation_feature_list));
+                validation_features = Some(
+                    vk::ValidationFeaturesEXT::default()
+                        .enabled_validation_features(&validation_feature_list),
+                );
                 create_info = create_info.push_next(validation_features.as_mut().unwrap());
             }
 
