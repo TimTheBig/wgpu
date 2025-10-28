@@ -27,7 +27,7 @@ use crate::{
     },
     dx12::{
         borrow_optional_interface_temporarily,
-        shader_compilation::{self, CompilerContainer},
+        shader_compilation::CompilerContainer,
         suballocation, DCompLib, DynamicStorageBufferOffsets, Event, ShaderCacheKey,
         ShaderCacheValue,
     },

@@ -25,7 +25,7 @@ use crate::{
     },
     dx12::{
         dcomp::DCompLib,
-        shader_compilation::{self, CompilerContainer},
+        shader_compilation::CompilerContainer,
         SurfaceTarget,
     },
 };

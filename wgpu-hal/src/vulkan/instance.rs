@@ -837,7 +837,7 @@ impl super::Instance {
                                 // SAFETY: Size and rules of the [i8] and [u8] are the same
                                 unsafe {
                                     core::mem::transmute::<
-                                        [i8; MAX_EXTENSION_NAME_SIZE],
+                                        [_; MAX_EXTENSION_NAME_SIZE],
                                         [u8; MAX_EXTENSION_NAME_SIZE],
                                     >(inst_ext.extension_name)
                                 }
