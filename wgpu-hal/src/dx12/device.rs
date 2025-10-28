@@ -1474,11 +1474,12 @@ impl crate::Device for super::Device {
             },
             bind_group_infos,
             naga_options: hlsl::Options {
-                flags: match self.dxc_container {
-                    // DXC doesn't support printf: https://github.com/microsoft/DirectXShaderCompiler/issues/357
-                    Some(_) => hlsl::WriterFlags::empty(),
-                    None => hlsl::WriterFlags::EMIT_DEBUG_PRINTF,
-                },
+                flags: if let Fxc(_) = self.compiler_container {
+                        hlsl::WriterFlags::EMIT_DEBUG_PRINTF
+                    } else {
+                        // DXC doesn't support printf: https://github.com/microsoft/DirectXShaderCompiler/issues/357
+                        hlsl::WriterFlags::empty()
+                    },
                 shader_model: self.shared.private_caps.shader_model,
                 binding_map,
                 fake_missing_bindings: false,
