@@ -833,16 +833,7 @@ impl super::Instance {
 
                     let extension_found = validation_extensions.iter().any(|inst_ext| {
                         CStr::from_bytes_until_nul(
-                            (
-                                // SAFETY: Size and rules of the [i8] and [u8] are the same
-                                unsafe {
-                                    core::mem::transmute::<
-                                        [_; MAX_EXTENSION_NAME_SIZE],
-                                        [u8; MAX_EXTENSION_NAME_SIZE],
-                                    >(inst_ext.extension_name)
-                                }
-                            )
-                            .as_slice(),
+                            bytemuck::cast::<_, [u8; MAX_EXTENSION_NAME_SIZE]>(inst_ext.extension_name).as_slice(),
                         )
                         .ok()
                             == Some(validation_features_name)
