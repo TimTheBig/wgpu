@@ -53,6 +53,8 @@ use function::*;
 
 pub const SUPPORTED_CAPABILITIES: &[spirv::Capability] = &[
     spirv::Capability::Shader,
+    // needed for debug-printf
+    spirv::Capability::Linkage,
     spirv::Capability::VulkanMemoryModel,
     spirv::Capability::ClipDistance,
     spirv::Capability::CullDistance,
@@ -97,6 +99,7 @@ pub const SUPPORTED_EXTENSIONS: &[&str] = &[
     "SPV_EXT_shader_atomic_float_add",
     "SPV_KHR_16bit_storage",
 ];
+// both needed for debug-printf
 pub const SUPPORTED_EXT_SETS: &[&str] = &["GLSL.std.450", "NonSemantic.DebugPrintf"];
 
 #[derive(Copy, Clone)]
