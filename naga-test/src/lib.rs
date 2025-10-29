@@ -115,6 +115,7 @@ pub struct SpirvOutParameters {
     #[serde(deserialize_with = "deserialize_binding_map")]
     pub binding_map: naga::back::spv::BindingMap,
     pub use_storage_input_output_16: bool,
+    pub emit_debug_printf: bool,
 }
 impl Default for SpirvOutParameters {
     fn default() -> Self {
@@ -128,6 +129,7 @@ impl Default for SpirvOutParameters {
             separate_entry_points: false,
             use_storage_input_output_16: true,
             binding_map: naga::back::spv::BindingMap::default(),
+            emit_debug_printf: false,
         }
     }
 }
@@ -169,6 +171,7 @@ impl SpirvOutParameters {
 #[serde(default)]
 pub struct WgslOutParameters {
     pub explicit_types: bool,
+    pub emit_debug_printf: bool,
 }
 impl From<&WgslOutParameters> for naga::back::wgsl::WriterFlags {
     fn from(value: &WgslOutParameters) -> Self {

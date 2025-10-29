@@ -7,10 +7,12 @@
         (
             entry_point:"csLoad",
             target_profile:"cs_5_1",
+            debug_printf:false,
         ),
         (
             entry_point:"csStore",
             target_profile:"cs_5_1",
+            debug_printf:false,
         ),
     ],
 )
