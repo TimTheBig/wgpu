@@ -783,7 +783,9 @@ pub struct Writer {
 }
 
 bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+    #[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
+    #[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
     pub struct WriterFlags: u32 {
         /// Include debug labels for everything.
         const DEBUG = 0x1;

@@ -321,7 +321,7 @@ fn write_output_hlsl(
     pipeline_constants: &naga::back::PipelineConstants,
     frag_ep: Option<naga::back::hlsl::FragmentEntryPoint>,
 ) {
-    use naga::back::hlsl;
+    use naga::back::hlsl::{self, WriterFlags};
 
     println!("generating HLSL");
 
@@ -355,6 +355,8 @@ fn write_output_hlsl(
         }
         .push(hlsl_snapshots::ConfigItem {
             entry_point: name.clone(),
+            // Skip DXC until it supports debug printf
+            debug_printf: options.flags.contains(WriterFlags::EMIT_DEBUG_PRINTF),
             target_profile: format!(
                 "{}_{}",
                 ep.stage.to_hlsl_str(),
@@ -378,6 +380,12 @@ fn write_output_wgsl(
 
     println!("generating WGSL");
 
+    let mut flags = wgsl::WriterFlags::empty();
+    flags.set(wgsl::WriterFlags::EXPLICIT_TYPES, params.explicit_types);
+    flags.set(
+        wgsl::WriterFlags::EMIT_DEBUG_PRINTF,
+        params.emit_debug_printf,
+    );
     let string = wgsl::write_string(module, info, params.into()).expect("WGSL write failed");
 
     input.write_output_file("wgsl", "wgsl", string, DIR_OUT);
