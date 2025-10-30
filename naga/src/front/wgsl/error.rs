@@ -367,6 +367,8 @@ pub(crate) enum Error<'a> {
         limit: u8,
     },
     PipelineConstantIDValue(Span),
+    /// String literals are only used with debugPrintf, for now...
+    UnexpectedStringLiteral(Span),
     NotBool(Span),
     ConstAssertFailed(Span),
     DirectiveAfterFirstGlobalDecl {
@@ -470,6 +472,7 @@ impl<'a> Error<'a> {
                         Token::Attribute => "@".to_string(),
                         Token::Number(_) => "number".to_string(),
                         Token::Word(s) => s.to_string(),
+                        Token::String(_) => "string".to_string(),
                         Token::Operation(c) => format!("operation (`{c}`)"),
                         Token::LogicalOperation(c) => format!("logical operation (`{c}`)"),
                         Token::ShiftOperation(c) => format!("bitshift (`{c}{c}`)"),
@@ -1150,6 +1153,14 @@ impl<'a> Error<'a> {
             Error::PipelineConstantIDValue(span) => ParseError {
                 message: "pipeline constant ID must be between 0 and 65535 inclusive".to_string(),
                 labels: vec![(span, "must be between 0 and 65535 inclusive".into())],
+                notes: vec![],
+            },
+            Error::UnexpectedStringLiteral(span) => ParseError {
+                message: "unexpected string literal".to_string(),
+                labels: vec![(
+                    span,
+                    "string literals can only be used as the first argument to debugPrintf".into(),
+                )],
                 notes: vec![],
             },
             Error::NotBool(span) => ParseError {

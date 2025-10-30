@@ -684,6 +684,11 @@ impl PhysicalDeviceFeatures {
             caps.supports_extension(khr::ray_tracing_position_fetch::NAME),
         );
 
+        features.set(
+            F::DEBUG_PRINTF,
+            caps.supports_extension(vk::KHR_SHADER_NON_SEMANTIC_INFO_NAME),
+        );
+
         if let Some(ref descriptor_indexing) = self.descriptor_indexing {
             // We use update-after-bind descriptors for all bind groups containing binding arrays.
             //
@@ -1147,6 +1152,11 @@ impl PhysicalDeviceProperties {
         // Require `VK_EXT_conservative_rasterization` if the associated feature was requested
         if requested_features.contains(wgt::Features::CONSERVATIVE_RASTERIZATION) {
             extensions.push(ext::conservative_rasterization::NAME);
+        }
+
+        // Require `VK_KHR_shader_non_semantic_info` if the associated feature was requested
+        if requested_features.contains(wgt::Features::DEBUG_PRINTF) {
+            extensions.push(vk::KHR_SHADER_NON_SEMANTIC_INFO_NAME);
         }
 
         // Require `VK_KHR_portability_subset` on macOS/iOS

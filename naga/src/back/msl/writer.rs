@@ -4060,6 +4060,8 @@ impl<W: Write> Writer<W> {
                         }
                     }
                 }
+                crate::Statement::DebugPrintf { .. } => {
+                }
                 crate::Statement::SubgroupBallot { result, predicate } => {
                     write!(self.out, "{level}")?;
                     let name = self.namer.call("");

@@ -49,12 +49,16 @@ bitflags::bitflags! {
         ///
         /// We can always support this, either through the language or a polyfill
         const INSTANCE_INDEX = 1 << 22;
+
         /// Sample specific LODs of cube / array shadow textures
         const TEXTURE_SHADOW_LOD = 1 << 23;
         /// Subgroup operations
         const SUBGROUP_OPERATIONS = 1 << 24;
         /// Image atomics
         const TEXTURE_ATOMICS = 1 << 25;
+
+        /// Debug Printf in shaders
+        const DEBUG_PRINTF = 1 << 26;
     }
 }
 
@@ -252,6 +256,10 @@ impl FeaturesManager {
         if self.0.contains(Features::DUAL_SOURCE_BLENDING) && options.version.is_es() {
             // https://registry.khronos.org/OpenGL/extensions/EXT/EXT_blend_func_extended.txt
             writeln!(out, "#extension GL_EXT_blend_func_extended : require")?;
+        }
+        if self.0.contains(Features::DEBUG_PRINTF) {
+            // https://github.com/KhronosGroup/GLSL/blob/master/extensions/ext/GLSL_EXT_debug_printf.txt
+            writeln!(out, "#extension GL_EXT_debug_printf : enable")?;
         }
 
         if self.0.contains(Features::INSTANCE_INDEX) {
@@ -460,6 +468,22 @@ impl<W> Writer<'_, W> {
             ref policies,
             ..
         } = self;
+
+        for block in module
+            .functions
+            .iter()
+            .map(|(_, f)| &f.body)
+            .chain(core::iter::once(&entry_point.function.body))
+        {
+            for statement in block.iter() {
+                match *statement {
+                    crate::Statement::DebugPrintf { .. } => {
+                        features.request(Features::DEBUG_PRINTF)
+                    }
+                    _ => {}
+                }
+            }
+        }
 
         // Loop through all expressions in both functions and the entry point
         // to check for needed features

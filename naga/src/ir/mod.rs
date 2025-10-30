@@ -2174,6 +2174,10 @@ pub enum Statement {
         /// [`SubgroupOperationResult`]: Expression::SubgroupOperationResult
         result: Handle<Expression>,
     },
+    DebugPrintf {
+        format: String,
+        arguments: Vec<Handle<Expression>>,
+    },
 }
 
 /// A function argument.

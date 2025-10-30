@@ -186,6 +186,9 @@ bitflags::bitflags! {
         /// Support for `quantizeToF16`, `pack2x16float`, and `unpack2x16float`, which store
         /// `f16`-precision values in `f32`s.
         const SHADER_FLOAT16_IN_FLOAT32 = 1 << 28;
+
+        /// Support for `debugPrintf`
+        const DEBUG_PRINTF = 1 << 29;
     }
 }
 

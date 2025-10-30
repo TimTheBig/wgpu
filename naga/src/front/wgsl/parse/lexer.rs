@@ -16,6 +16,7 @@ pub enum Token<'a> {
     Attribute,
     Number(core::result::Result<Number, NumberError>),
     Word(&'a str),
+    String(&'a str),
     Operation(char),
     LogicalOperation(char),
     ShiftOperation(char),
@@ -196,6 +197,13 @@ fn consume_token(input: &str, generic: bool, ignore_doc_comments: bool) -> (Toke
                 Some('=') => (Token::AssignmentOperation(cur), chars.as_str()),
                 _ => (Token::Operation(cur), og_chars),
             }
+        }
+        '"' => {
+            let (string, mut rest) = consume_any(&input[1..], |c| c != '"');
+            if !rest.is_empty() {
+                rest = &rest[1..];
+            }
+            (Token::String(string), rest)
         }
         _ if is_blankspace(cur) => {
             let (_, rest) = consume_any(input, is_blankspace);

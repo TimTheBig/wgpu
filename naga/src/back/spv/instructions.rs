@@ -156,6 +156,16 @@ impl super::Instruction {
         instruction
     }
 
+    pub(super) fn ext_inst_glsl_std(
+        set_id: Word,
+        op: spirv::GLOp,
+        result_type_id: Word,
+        id: Word,
+        operands: &[Word],
+    ) -> Self {
+        Self::ext_inst(set_id, op, result_type_id, id, operands)
+    }
+
     pub(super) fn ext_inst(
         set_id: Word,
         op: spirv::GLOp,

@@ -187,6 +187,11 @@ pub enum FunctionError {
     InvalidRayDescriptor(Handle<crate::Expression>),
     #[error("Ray Query {0:?} does not have a matching type")]
     InvalidRayQueryType(Handle<crate::Type>),
+    #[error("Printf value argument {index} expression is invalid")]
+    InvalidPrintfArgument {
+        index: usize,
+        source: ExpressionError,
+    },
     #[error("Hit distance {0:?} must be an f32")]
     InvalidHitDistanceType(Handle<crate::Expression>),
     #[error("Shader requires capability {0:?}")]
@@ -1537,6 +1542,25 @@ impl super::Validator {
                         }
                         crate::RayQueryFunction::ConfirmIntersection => {}
                         crate::RayQueryFunction::Terminate => {}
+                    }
+                }
+                S::DebugPrintf { ref arguments, .. } => {
+                    if !self
+                        .capabilities
+                        .contains(super::Capabilities::DEBUG_PRINTF)
+                    {
+                        return Err(FunctionError::MissingCapability(
+                            super::Capabilities::DEBUG_PRINTF,
+                        )
+                        .with_span_static(span, "debugPrintf"));
+                    }
+                    for (index, &expr) in arguments.iter().enumerate() {
+                        context
+                            .resolve_type_impl(expr, &self.valid_expression_set)
+                            .map_err_inner(|source| {
+                                FunctionError::InvalidPrintfArgument { index, source }
+                                    .with_span_handle(expr, context.expressions)
+                            })?;
                     }
                 }
                 S::SubgroupBallot { result, predicate } => {

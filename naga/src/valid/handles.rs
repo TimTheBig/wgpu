@@ -801,6 +801,12 @@ impl super::Validator {
                 }
                 Ok(())
             }
+            crate::Statement::DebugPrintf { ref arguments, .. } => {
+                for arg in arguments.iter().copied() {
+                    validate_expr(arg)?;
+                }
+                Ok(())
+            }
             crate::Statement::SubgroupBallot { result, predicate } => {
                 validate_expr_opt(predicate)?;
                 validate_expr(result)?;

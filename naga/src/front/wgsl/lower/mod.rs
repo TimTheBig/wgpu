@@ -2119,6 +2119,9 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                     ast::Literal::Number(Number::AbstractInt(i)) => ir::Literal::AbstractInt(i),
                     ast::Literal::Number(Number::AbstractFloat(f)) => ir::Literal::AbstractFloat(f),
                     ast::Literal::Bool(b) => ir::Literal::Bool(b),
+                    ast::Literal::String(_) => {
+                        return Err(Box::new(Error::UnexpectedStringLiteral(span)));
+                    }
                 };
                 let handle = ctx.interrupt_emitter(ir::Expression::Literal(literal), span)?;
                 return Ok(Typed::Plain(handle));
@@ -3042,6 +3045,38 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                                 ctx,
                             )?;
                             return Ok(Some(handle));
+                        }
+                        "debugPrintf" => {
+                            let format = arguments.first().ok_or(Error::WrongArgumentCount {
+                                span,
+                                expected: 1..16,
+                                found: 0,
+                            })?;
+
+                            let format = match ctx.ast_expressions[*format] {
+                                ast::Expression::Literal(ast::Literal::String(format)) => {
+                                    format.to_string()
+                                }
+                                _ => {
+                                    return Err(Box::new(Error::Internal("Expected format string")))
+                                }
+                            };
+
+                            let arguments = arguments
+                                .iter()
+                                .skip(1)
+                                .map(|&arg| self.expression(arg, ctx))
+                                .collect::<Result<Vec<_>>>()?;
+                            let rctx = ctx.runtime_expression_ctx(span)?;
+
+                            rctx.block
+                                .extend(rctx.emitter.finish(&rctx.function.expressions));
+
+                            rctx.emitter.start(&rctx.function.expressions);
+                            rctx.block
+                                .push(crate::Statement::DebugPrintf { format, arguments }, span);
+
+                            return Ok(None);
                         }
                         "subgroupBallot" => {
                             let mut args = ctx.prepare_args(arguments, 0, span);

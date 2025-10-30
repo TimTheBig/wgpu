@@ -23,7 +23,7 @@ use crate::{
         self,
         dxgi::{factory::DxgiAdapter, result::HResult},
     },
-    dx12::{dcomp::DCompLib, shader_compilation, SurfaceTarget},
+    dx12::{dcomp::DCompLib, shader_compilation::CompilerContainer, SurfaceTarget},
 };
 
 impl Drop for super::Adapter {
@@ -64,7 +64,7 @@ impl super::Adapter {
         dcomp_lib: &Arc<DCompLib>,
         instance_flags: wgt::InstanceFlags,
         memory_budget_thresholds: wgt::MemoryBudgetThresholds,
-        compiler_container: Arc<shader_compilation::CompilerContainer>,
+        compiler_container: Arc<CompilerContainer>,
         backend_options: wgt::Dx12BackendOptions,
     ) -> Option<crate::ExposedAdapter<super::Api>> {
         // Create the device so that we can get the capabilities.
@@ -568,6 +568,13 @@ impl super::Adapter {
             wgt::Features::EXPERIMENTAL_MESH_SHADER,
             mesh_shader_supported,
         );
+
+        // DXC lacks support for printf, so only enable it on FXC
+        // see https://github.com/microsoft/DirectXShaderCompiler/issues/357
+        if matches!(*compiler_container, CompilerContainer::Fxc(_)) {
+            features.set(wgt::Features::DEBUG_PRINTF, true);
+            log::warn!("could not enable `EMIT_DEBUG_PRINTF` as the DXC dx12 compiler doesn't support printf");
+        }
 
         // TODO: Determine if IPresentationManager is supported
         let presentation_timer = auxil::dxgi::time::PresentationTimer::new_dxgi();

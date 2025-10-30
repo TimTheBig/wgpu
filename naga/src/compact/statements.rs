@@ -117,6 +117,14 @@ impl FunctionTracer<'_> {
                         self.expressions_used.insert(query);
                         self.trace_ray_query_function(fun);
                     }
+                    St::DebugPrintf {
+                        format: _,
+                        ref arguments,
+                    } => {
+                        for expr in arguments {
+                            self.expressions_used.insert(*expr);
+                        }
+                    }
                     St::SubgroupBallot { result, predicate } => {
                         if let Some(predicate) = predicate {
                             self.expressions_used.insert(predicate);
@@ -334,6 +342,14 @@ impl FunctionMap {
                     } => {
                         adjust(query);
                         self.adjust_ray_query_function(fun);
+                    }
+                    St::DebugPrintf {
+                        format: _,
+                        ref mut arguments,
+                    } => {
+                        for expr in arguments {
+                            adjust(expr);
+                        }
                     }
                     St::SubgroupBallot {
                         ref mut result,

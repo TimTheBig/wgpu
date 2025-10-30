@@ -307,6 +307,12 @@ impl StatementGraph {
                         crate::RayQueryFunction::Terminate => "RayQueryTerminate",
                     }
                 }
+                S::DebugPrintf { ref arguments, .. } => {
+                    for &arg in arguments {
+                        self.dependencies.push((id, arg, "arg"));
+                    }
+                    "DebugPrintf"
+                }
                 S::SubgroupBallot { result, predicate } => {
                     if let Some(predicate) = predicate {
                         self.dependencies.push((id, predicate, "predicate"));

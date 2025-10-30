@@ -867,6 +867,10 @@ impl Parser {
 
                 ast::Expression::Literal(ast::Literal::Number(num))
             }
+            (Token::String(string), _) => {
+                let _ = lexer.next();
+                ast::Expression::Literal(ast::Literal::String(string))
+            }
             (Token::Word("RAY_FLAG_NONE"), _) => {
                 let _ = lexer.next();
                 literal_ray_flag(crate::RayFlag::empty())

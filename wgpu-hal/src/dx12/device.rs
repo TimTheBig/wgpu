@@ -26,8 +26,9 @@ use crate::{
         dxgi::{name::ObjectExt, result::HResult},
     },
     dx12::{
-        borrow_optional_interface_temporarily, shader_compilation, suballocation, DCompLib,
-        DynamicStorageBufferOffsets, Event, ShaderCacheKey, ShaderCacheValue,
+        borrow_optional_interface_temporarily, shader_compilation::CompilerContainer,
+        suballocation, DCompLib, DynamicStorageBufferOffsets, Event, ShaderCacheKey,
+        ShaderCacheValue,
     },
     AccelerationStructureEntries, TlasInstance,
 };
@@ -48,7 +49,7 @@ impl super::Device {
         library: &Arc<D3D12Lib>,
         dcomp_lib: &Arc<DCompLib>,
         memory_budget_thresholds: wgt::MemoryBudgetThresholds,
-        compiler_container: Arc<shader_compilation::CompilerContainer>,
+        compiler_container: Arc<CompilerContainer>,
         backend_options: wgt::Dx12BackendOptions,
     ) -> Result<Self, crate::DeviceError> {
         if private_caps
@@ -1474,6 +1475,13 @@ impl crate::Device for super::Device {
             },
             bind_group_infos,
             naga_options: hlsl::Options {
+                flags: if let CompilerContainer::Fxc(_) = *self.compiler_container {
+                    hlsl::WriterFlags::EMIT_DEBUG_PRINTF
+                } else {
+                    log::warn!("could not enable `EMIT_DEBUG_PRINTF` as the DXC dx12 compiler doesn't support printf");
+                    // DXC doesn't support printf: https://github.com/microsoft/DirectXShaderCompiler/issues/357
+                    hlsl::WriterFlags::empty()
+                },
                 shader_model: self.shared.private_caps.shader_model,
                 binding_map,
                 fake_missing_bindings: false,

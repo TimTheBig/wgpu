@@ -15,7 +15,7 @@ use super::{
     BackendResult, Error, FragmentEntryPoint, Options, PipelineOptions, ShaderModel,
 };
 use crate::{
-    back::{self, get_entry_points, Baked},
+    back::{self, get_entry_points, hlsl::WriterFlags, Baked},
     common,
     proc::{self, index, ExternalTextureNameKey, NameKey},
     valid, Handle, Module, RayQueryFunction, Scalar, ScalarKind, ShaderStage, TypeInner,
@@ -2554,6 +2554,22 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 ref cases,
             } => {
                 self.write_switch(module, func_ctx, level, selector, cases)?;
+            }
+            Statement::DebugPrintf {
+                ref format,
+                ref arguments,
+            } => {
+                if self.options.flags.contains(WriterFlags::EMIT_DEBUG_PRINTF) {
+                    write!(self.out, "{level}")?;
+                    write!(self.out, "printf(\"{format}\",")?;
+                    for (index, argument) in arguments.iter().enumerate() {
+                        if index != 0 {
+                            write!(self.out, ", ")?;
+                        }
+                        self.write_expr(module, *argument, func_ctx)?;
+                    }
+                    writeln!(self.out, ");")?
+                }
             }
             Statement::RayQuery { query, ref fun } => match *fun {
                 RayQueryFunction::Initialize {

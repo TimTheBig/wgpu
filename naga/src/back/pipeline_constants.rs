@@ -839,7 +839,8 @@ fn adjust_stmt(new_pos: &HandleVec<Expression, Handle<Expression>>, stmt: &mut S
         | Statement::Continue
         | Statement::Kill
         | Statement::ControlBarrier(_)
-        | Statement::MemoryBarrier(_) => {}
+        | Statement::MemoryBarrier(_)
+        | Statement::DebugPrintf { .. } => {}
     }
 }
 

@@ -1231,6 +1231,17 @@ bitflags_array! {
         ///
         /// [`Device::create_shader_module_passthrough`]: https://docs.rs/wgpu/latest/wgpu/struct.Device.html#method.create_shader_module_passthrough
         const EXPERIMENTAL_PASSTHROUGH_SHADERS = 1 << 52;
+
+        /// Enables support for debugPrintf in WGSL shaders.
+        ///
+        /// Supported Platforms:
+        /// - DX11 (fxc only)
+        /// - DX12 (fxc only)
+        /// - Vulkan
+        /// - OpenGL
+        ///
+        /// This is a native only feature
+        const DEBUG_PRINTF = 1 << 53;
     }
 
     /// Features that are not guaranteed to be supported.

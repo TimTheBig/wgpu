@@ -67,10 +67,12 @@ enum Indirection {
 bitflags::bitflags! {
     #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
     #[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
     pub struct WriterFlags: u32 {
         /// Always annotate the type information instead of inferring.
         const EXPLICIT_TYPES = 0x1;
+        /// Emit debug printf statements
+        const EMIT_DEBUG_PRINTF = 0x2;
     }
 }
 
@@ -856,6 +858,22 @@ impl<W: Write> Writer<W> {
                 }
             }
             Statement::RayQuery { .. } => unreachable!(),
+            Statement::DebugPrintf {
+                ref format,
+                ref arguments,
+            } => {
+                if self.flags.contains(WriterFlags::EMIT_DEBUG_PRINTF) {
+                    write!(self.out, "{level}")?;
+                    write!(self.out, "debugPrintf(\"{format}\",")?;
+                    for (index, &argument) in arguments.iter().enumerate() {
+                        if index != 0 {
+                            write!(self.out, ", ")?;
+                        }
+                        self.write_expr(module, argument, func_ctx)?;
+                    }
+                    writeln!(self.out, ");")?
+                }
+            }
             Statement::SubgroupBallot { result, predicate } => {
                 write!(self.out, "{level}")?;
                 let res_name = Baked(result).to_string();
