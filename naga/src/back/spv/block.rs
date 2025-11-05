@@ -204,7 +204,8 @@ impl Writer {
 
         let clamp_id = self.id_gen.next();
 
-        body.push(Instruction::ext_inst_glsl_std(
+        // ext_inst_glsl_std
+        body.push(Instruction::ext_inst(
             self.extension_inst_import("GLSL.std.450"),
             spirv::GLOp::FClamp,
             float_type_id,
@@ -1069,7 +1070,8 @@ impl BlockContext<'_> {
                             arg2_id = self.writer.get_constant_composite(ty, &self.temp_list);
                         }
 
-                        MathOp::Custom(Instruction::ext_inst_glsl_std(
+                        // ext_inst_glsl_std
+                        MathOp::Custom(Instruction::ext_inst(
                             self.writer.extension_inst_import("GLSL.std.450"),
                             spirv::GLOp::FClamp,
                             result_type_id,
@@ -1283,7 +1285,8 @@ impl BlockContext<'_> {
                                     &self.temp_list,
                                 ));
 
-                                MathOp::Custom(Instruction::ext_inst_glsl_std(
+                                // ext_inst_glsl_std
+                                MathOp::Custom(Instruction::ext_inst(
                                     self.writer.extension_inst_import("GLSL.std.450"),
                                     spirv::GLOp::FMix,
                                     result_type_id,
@@ -1340,7 +1343,8 @@ impl BlockContext<'_> {
                         };
 
                         let lsb_id = self.gen_id();
-                        block.body.push(Instruction::ext_inst_glsl_std(
+                        // ext_inst_glsl_std
+                        block.body.push(Instruction::ext_inst(
                             self.writer.extension_inst_import("GLSL.std.450"),
                             spirv::GLOp::FindILsb,
                             result_type_id,
@@ -1348,7 +1352,8 @@ impl BlockContext<'_> {
                             &[arg0_id],
                         ));
 
-                        MathOp::Custom(Instruction::ext_inst_glsl_std(
+                        // ext_inst_glsl_std
+                        MathOp::Custom(Instruction::ext_inst(
                             self.writer.extension_inst_import("GLSL.std.450"),
                             spirv::GLOp::UMin,
                             result_type_id,
@@ -1611,7 +1616,8 @@ impl BlockContext<'_> {
                 };
 
                 block.body.push(match math_op {
-                    MathOp::Ext(op) => Instruction::ext_inst_glsl_std(
+                    // ext_inst_glsl_std
+                    MathOp::Ext(op) => Instruction::ext_inst(
                         self.writer.extension_inst_import("GLSL.std.450"),
                         op,
                         result_type_id,

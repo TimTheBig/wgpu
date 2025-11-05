@@ -446,7 +446,8 @@ impl BlockContext<'_> {
         // and negative values in a single instruction: negative values of
         // `input_id` get treated as very large positive values.
         let restricted_id = self.gen_id();
-        block.body.push(Instruction::ext_inst_glsl_std(
+        // ext_inst_glsl_std
+        block.body.push(Instruction::ext_inst(
             self.writer.extension_inst_import("GLSL.std.450"),
             spirv::GLOp::UMin,
             type_id,
@@ -580,7 +581,8 @@ impl BlockContext<'_> {
         // and negative values in a single instruction: negative values of
         // `coordinates` get treated as very large positive values.
         let restricted_coordinates_id = self.gen_id();
-        block.body.push(Instruction::ext_inst_glsl_std(
+        // ext_inst_glsl_std
+        block.body.push(Instruction::ext_inst(
             self.writer.extension_inst_import("GLSL.std.450"),
             spirv::GLOp::UMin,
             coordinates.type_id,
