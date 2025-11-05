@@ -469,22 +469,6 @@ impl<W> Writer<'_, W> {
             ..
         } = self;
 
-        for block in module
-            .functions
-            .iter()
-            .map(|(_, f)| &f.body)
-            .chain(core::iter::once(&entry_point.function.body))
-        {
-            for statement in block.iter() {
-                match *statement {
-                    crate::Statement::DebugPrintf { .. } => {
-                        features.request(Features::DEBUG_PRINTF)
-                    }
-                    _ => {}
-                }
-            }
-        }
-
         // Loop through all expressions in both functions and the entry point
         // to check for needed features
         for (expressions, info) in module
@@ -594,7 +578,10 @@ impl<W> Writer<'_, W> {
                 match *stmt {
                     crate::Statement::ImageAtomic { .. } => {
                         features.request(Features::TEXTURE_ATOMICS)
-                    }
+                    },
+                    crate::Statement::DebugPrintf { .. } => {
+                        features.request(Features::DEBUG_PRINTF)
+                    },
                     _ => {}
                 }
             }
