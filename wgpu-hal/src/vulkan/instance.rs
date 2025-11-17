@@ -96,14 +96,21 @@ unsafe extern "system" fn debug_utils_messenger_callback(
     let message = unsafe { cd.message_as_c_str() }.map_or(Cow::Borrowed(""), CStr::to_string_lossy);
 
     let _ = std::panic::catch_unwind(|| {
-        log::log!(
-            level,
-            "{:?} [{} (0x{:x})]\n\t{}",
-            message_type,
-            message_id_name,
-            cd.message_id_number,
-            message,
-        );
+        // extract vk printf message marker
+        if let Some((_, printf_message)) = message.split_once("DebugPrintf:\n") {
+            if level == log::Level::Info {
+                log::info!("DEBUG PRINTF: {}", printf_message);
+            }
+        } else {
+            log::log!(
+                level,
+                "{:?} [{} (0x{:x})]\n\t{}",
+                message_type,
+                message_id_name,
+                cd.message_id_number,
+                message,
+            );
+        }
     });
 
     if cd.queue_label_count != 0 {
@@ -134,7 +141,7 @@ unsafe extern "system" fn debug_utils_messenger_callback(
 
     if cd.object_count != 0 {
         let labels = unsafe { slice::from_raw_parts(cd.p_objects, cd.object_count as usize) };
-        //TODO: use color fields of `vk::DebugUtilsLabelExt`?
+        // TODO: use color fields of `vk::DebugUtilsLabelExt`?
         let names = labels
             .iter()
             .map(|obj_info| {
