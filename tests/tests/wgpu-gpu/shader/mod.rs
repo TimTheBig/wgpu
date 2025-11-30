@@ -32,6 +32,7 @@ pub fn all_tests(tests: &mut Vec<GpuTestInitializer>) {
     struct_layout::all_tests(tests);
     workgroup_size_overrides::all_tests(tests);
     zero_init_workgroup_mem::all_tests(tests);
+    debug_printf::all_tests(tests);
 }
 
 #[derive(Clone, Copy, PartialEq)]

@@ -3,14 +3,20 @@ use wgpu::{
     Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType,
 };
 
-use wgpu_test::{gpu_test, GpuTestConfiguration, TestParameters};
+use wgpu_test::{gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+
+pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
+    vec.push(DEBUG_PRINTF);
+}
 
 #[gpu_test]
 static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
             .features(Features::DEBUG_PRINTF)
-            .limits(Limits::default()),
+            .limits(Limits::default())
+            // fxc is the only DX compiler with printf support
+            .force_fxc(true),
     )
     .run_sync(|ctx| {
         let pll = ctx
