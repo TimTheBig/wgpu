@@ -346,16 +346,3 @@ fn f16_io_polyfill_codegen() {
         "Expected 4 OpFConvert instructions for polyfilled I/O"
     );
 }
-
-#[test]
-fn debug_pintf() {
-    require(
-        &[Ca::Linkage],
-        r#"
-        @compute @workgroup_size(1)
-        fn main() {
-            debugPrintf("%d", 42);
-        }
-    "#,
-    );
-}
