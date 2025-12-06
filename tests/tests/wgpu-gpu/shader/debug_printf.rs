@@ -19,6 +19,11 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
             .force_fxc(true),
     )
     .run_sync(|ctx| {
+        // SAFETY: WGPU tests are run one at a time
+        unsafe {
+            std::env::set_var("VK_LAYER_PRINTF_ENABLE", "1");
+        }
+
         let pll = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
@@ -56,4 +61,7 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
         ctx.queue.submit(Some(encoder.finish()));
 
         ctx.device.poll(PollType::wait_indefinitely()).unwrap();
+
+        // todo read stdout or system specific output location
+        // output should be "Hello world 1" 64 times
     });

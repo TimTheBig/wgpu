@@ -2,7 +2,7 @@
 Implementations for `BlockContext` methods.
 */
 
-use alloc::vec::Vec;
+use alloc::{vec::Vec, string::ToString};
 
 use arrayvec::ArrayVec;
 use spirv::Word;
@@ -3649,7 +3649,8 @@ impl BlockContext<'_> {
                         let format_id = self.gen_id();
                         self.writer
                             .strings
-                            .push(Instruction::string(format, format_id));
+                            // todo use spv specific conversion foction for format
+                            .push(Instruction::string(&format.to_string(), format_id));
                         let id = self.gen_id();
 
                         self.temp_list.clear();

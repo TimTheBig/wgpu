@@ -5,6 +5,7 @@ use crate::diagnostic_filter::ConflictingDiagnosticRuleError;
 use crate::error::replace_control_chars;
 use crate::proc::{Alignment, ConstantEvaluatorError, ResolveError};
 use crate::{Scalar, SourceLocation, Span};
+use crate::{PrintfParseError, PrintfParseErrorKind};
 
 use super::parse::directive::enable_extension::{EnableExtension, UnimplementedEnableExtension};
 use super::parse::directive::language_extension::{
@@ -412,6 +413,10 @@ pub(crate) enum Error<'a> {
         member_name_span: Span,
     },
     TypeTooLarge {
+        span: Span,
+    },
+    InvalidPrintfFormatString {
+        inner: PrintfParseError,
         span: Span,
     },
 }
@@ -1396,6 +1401,39 @@ impl<'a> Error<'a> {
                     "the maximum size is {} bytes",
                     crate::valid::MAX_TYPE_SIZE
                 )],
+            },
+            Error::InvalidPrintfFormatString { ref inner, span } => {
+                // convert to range for modification
+                let mut span = span.to_range().unwrap(); // todo handle
+                // only span invalid format specifier
+                span.start += inner.specifier_offset as usize;
+                span.end = span.start + inner.specifier_length as usize;
+                // convert back to span
+                let span = Span::from(span);
+
+                match &inner.kind {
+                    PrintfParseErrorKind::InvalidFormatSpecifier(specifier) => ParseError {
+                        message: inner.to_string(),
+                        labels: vec![(span, format!("{specifier} is invalid").into())],
+                        notes: vec![format!("try one of: {}", crate::VALID_FORMAT_SPECIFIER)],
+                    },
+                    // spans first '%' without specifier
+                    PrintfParseErrorKind::NoSpecifierAfterPercent => ParseError {
+                        message: inner.to_string(),
+                        labels: vec![(span, "the invalid specifier".into())],
+                        notes: vec![format!("try adding one of: {}", crate::VALID_FORMAT_SPECIFIER)],
+                    },
+                    PrintfParseErrorKind::InvalidVectorLength(iv_len) => ParseError {
+                        message: inner.to_string(),
+                        labels: vec![(span, format!("{iv_len} is not a valid vector length").into())],
+                        notes: vec!["try specifying the length as one of: 2, 3, or 4".into()],
+                    },
+                    PrintfParseErrorKind::NoVectorLengthSpecified => ParseError {
+                        message: inner.to_string(),
+                        labels: vec![(span, "no vector length".into())],
+                        notes: vec!["specify a vector length after %v, in the form %v<len><type>, (eg. %v3f)".into()],
+                    },
+                }
             },
         }
     }

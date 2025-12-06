@@ -158,6 +158,9 @@ pub enum Error {
 
     #[error("atomic upgrade error: {0}")]
     AtomicUpgradeError(atomic_upgrade::Error),
+
+    #[error(transparent)]
+    InvalidPrintfFormatString(#[from] crate::PrintfParseError),
 }
 
 impl Error {

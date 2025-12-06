@@ -1,4 +1,5 @@
 use super::{Error, LookupExpression, LookupHelper as _};
+use super::convert::parse_printf_string_spv;
 
 struct ExtInst {
     result_type_id: spirv::Word,
@@ -79,7 +80,9 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
             arguments.push(self.get_expr_handle(arg_id, lexp, ctx, emitter, block, body_idx));
         }
 
-        block.push(crate::Statement::DebugPrintf { format, arguments }, span);
+        block.push(crate::Statement::DebugPrintf {
+            format: parse_printf_string_spv(format)?, arguments
+        }, span);
         emitter.start(ctx.expressions);
 
         Ok(())

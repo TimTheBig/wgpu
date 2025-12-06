@@ -175,7 +175,7 @@ pub(super) fn map_storage_class(word: spirv::Word) -> Result<super::ExtendedClas
         Some(Sc::Private) => Ec::Global(crate::AddressSpace::Private),
         Some(Sc::UniformConstant) => Ec::Global(crate::AddressSpace::Handle),
         Some(Sc::StorageBuffer) => Ec::Global(crate::AddressSpace::Storage {
-            //Note: this is restricted by decorations later
+            // Note: this is restricted by decorations later
             access: crate::StorageAccess::LOAD | crate::StorageAccess::STORE,
         }),
         // we expect the `Storage` case to be filtered out before calling this function.
@@ -184,4 +184,28 @@ pub(super) fn map_storage_class(word: spirv::Word) -> Result<super::ExtendedClas
         Some(Sc::PushConstant) => Ec::Global(crate::AddressSpace::PushConstant),
         _ => return Err(Error::UnsupportedStorageClass(word)),
     })
+}
+
+use crate::ir::{PrintfString, FormatElement, PrintfParseError};
+use std::string::{String, ToString};
+
+// todo to/from string for PrintfString
+pub(crate) fn display_printf_string_spv(fmt: PrintfString) -> String {
+    // use std::fmt::Write;
+    // let mut str_out = String::new();
+
+    // for fmt_elem in &fmt.0 {
+    //     match fmt_elem {
+    //         FormatElement::Verbatim(str) => str_out.push_str(str),
+    //         // conversion_specifier fmt is infalible
+    //         FormatElement::Format(conversion_specifier) => write!(str_out, "{conversion_specifier}").unwrap(),
+    //     };
+    // }
+
+    // str_out
+    fmt.to_string()
+}
+
+pub(crate) fn parse_printf_string_spv(str: String) -> Result<PrintfString, PrintfParseError> {
+    str.parse()
 }

@@ -3047,15 +3047,15 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                             return Ok(Some(handle));
                         }
                         "debugPrintf" => {
-                            let format = arguments.first().ok_or(Error::WrongArgumentCount {
+                            let format_expr = arguments.first().ok_or(Error::WrongArgumentCount {
                                 span,
                                 expected: 1..16,
                                 found: 0,
                             })?;
 
-                            let format = match ctx.ast_expressions[*format] {
+                            let format = match ctx.ast_expressions[*format_expr] {
                                 ast::Expression::Literal(ast::Literal::String(format)) => {
-                                    format.to_string()
+                                    format
                                 }
                                 _ => {
                                     return Err(Box::new(Error::Internal("Expected format string")))
@@ -3074,7 +3074,13 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
 
                             rctx.emitter.start(&rctx.function.expressions);
                             rctx.block
-                                .push(crate::Statement::DebugPrintf { format, arguments }, span);
+                                .push(crate::Statement::DebugPrintf {
+                                    format: format.parse().map_err(|err| Error::InvalidPrintfFormatString {
+                                        inner: err,
+                                        span,
+                                    })?,
+                                    arguments,
+                                }, span);
 
                             return Ok(None);
                         }

@@ -220,6 +220,12 @@ An override expression can be evaluated at pipeline creation time.
 */
 
 mod block;
+mod printf;
+pub use printf::PrintfString;
+pub(crate) use printf::{
+    ConversionType, FormatElement, PrintfParseError, PrintfParseErrorKind,
+    PrecisionParam, ConversionSpecifier, VALID_FORMAT_SPECIFIER,
+};
 
 use alloc::{boxed::Box, string::String, vec::Vec};
 
@@ -2175,7 +2181,7 @@ pub enum Statement {
         result: Handle<Expression>,
     },
     DebugPrintf {
-        format: String,
+        format: PrintfString,
         arguments: Vec<Handle<Expression>>,
     },
 }
