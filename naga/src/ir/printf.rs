@@ -1,7 +1,10 @@
-//! Printf parsing
+/*!
+    # Printf parsing
+    This parses the format string into segments
+*/
 
 use core::{fmt::{Display, Write}, str::FromStr, num::NonZeroU8};
-use std::{borrow::ToOwned, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
@@ -58,6 +61,8 @@ impl Display for ConversionSpecifier {
 pub(crate) enum PrecisionParam {
     Literal(i32),
     // todo what does this mean, document
+    /// Use the default precision for the conversion type,
+    /// will never be present in fully parsed format strings
     FromArgument,
 }
 
@@ -112,7 +117,7 @@ impl Display for ConversionType {
     }
 }
 
-pub(crate) const VALID_FORMAT_SPECIFIER: &'static str = "d, i, o, x, X, e, E, f, F, g, G, %, p";
+pub(crate) const VALID_FORMAT_SPECIFIER: &str = "d, i, o, x, X, e, E, f, F, g, G, %, p";
 
 #[derive(Clone, Debug, thiserror::Error)]
 pub struct PrintfParseError {
@@ -163,7 +168,7 @@ impl Display for PrintfString {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for fmt_elem in &self.0 {
             match fmt_elem {
-                FormatElement::Verbatim(str) => f.write_str(&str),
+                FormatElement::Verbatim(vr_str) => f.write_str(vr_str),
                 FormatElement::Format(conversion_specifier) => write!(f, "{conversion_specifier}"),
             }?
         }
@@ -236,6 +241,7 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
     if matches!(s.chars().next(), Some('.')) {
         // classical form ".N"
         s = &s[1..];
+        // todo share parser for both forms
         let (p, s2) = take_numeric_param(s);
         spec.precision = p;
         s = s2;
@@ -244,15 +250,16 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
         // Only accept as precision if there are digits and the next char isn't a length/type char we expect.
         let mut chars = s.chars();
         if let Some(next) = chars.next() {
-            if ('0'..='9').contains(&next) {
+            if next.is_ascii_digit() {
                 // parse literal digits
                 let mut s_lit = s;
-                let mut p = 0i32;
-                // FIXME: once the toolchain is updated to support if let chains change this to: while let Some(d) = s_lit.chars().next() && ('0'..='9').contains(&d)
-                loop {
+                let mut p = 0u32;
+                // FIXME: once the toolchain is updated to support if let chains change this to: while let Some(d) = s_lit.chars().next() && d.is_ascii_digit()
+                // precision must fit in u8
+                for _ in 0..3 {
                     match s_lit.chars().next() {
                         // Convert ASCII digit to its integer value
-                        Some(d) if ('0'..='9').contains(&d) => {
+                        Some(d) if d.is_ascii_digit() => {
                             p = 10 * p + ((d as i32) - ('0' as i32));
                             s_lit = &s_lit[1..];
                         }
@@ -356,12 +363,12 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
 fn take_numeric_param(s: &str) -> (PrecisionParam, &str) {
     match s.chars().next() {
         Some('*') => (PrecisionParam::FromArgument, &s[1..]),
-        Some(digit) if ('0'..='9').contains(&digit) => {
+        Some(digit) if digit.is_ascii_digit() => {
             let mut s = s;
             let mut w: i32 = 0;
             loop {
                 match s.chars().next() {
-                    Some(d) if ('0'..='9').contains(&d) => {
+                    Some(d) if d.is_ascii_digit() => {
                         w = 10 * w + ((d as i32) - ('0' as i32));
                     }
                     _ => break,

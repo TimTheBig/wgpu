@@ -187,7 +187,7 @@ pub(super) fn map_storage_class(word: spirv::Word) -> Result<super::ExtendedClas
 }
 
 use crate::ir::{PrintfString, FormatElement, PrintfParseError};
-use std::string::{String, ToString};
+use alloc::string::{String, ToString};
 
 // todo to/from string for PrintfString
 pub(crate) fn display_printf_string_spv(fmt: PrintfString) -> String {
