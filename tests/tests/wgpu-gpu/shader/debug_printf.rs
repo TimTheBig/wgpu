@@ -30,7 +30,7 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
             .create_pipeline_layout(&PipelineLayoutDescriptor {
                 label: None,
                 bind_group_layouts: &[],
-                push_constant_ranges: &[],
+                immediate_size: 0,
             });
 
         let sm = ctx

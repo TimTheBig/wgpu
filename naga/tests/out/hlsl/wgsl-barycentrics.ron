@@ -5,10 +5,12 @@
         (
             entry_point:"fs_main",
             target_profile:"ps_6_1",
+            debug_printf:false,
         ),
         (
             entry_point:"fs_main_no_perspective",
             target_profile:"ps_6_1",
+            debug_printf:false,
         ),
     ],
     compute:[
