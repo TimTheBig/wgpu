@@ -454,7 +454,6 @@ impl Parser {
                 let _ = lexer.next();
                 literal_ray_flag(crate::RayFlag::empty())
             }
-            (Token::Word("RAY_FLAG_NONE"), _) => literal_ray_flag(crate::RayFlag::empty()),
             (Token::Word("RAY_FLAG_FORCE_OPAQUE"), _) => {
                 literal_ray_flag(crate::RayFlag::FORCE_OPAQUE)
             }

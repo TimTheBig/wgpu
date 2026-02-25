@@ -1702,7 +1702,16 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         return Err(Error::UnsupportedExtInstSet(set_id));
                     }
                     let inst_id = self.next()?;
-                    let gl_op = Glo::from_u32(inst_id).ok_or(Error::UnsupportedExtInst(inst_id))?;
+
+                    let ext_name = if let Some(name) = self.ext_inst_imports.get(&set_id) {
+                        name
+                    } else {
+                        // We get here only if the set_id doesn't point to an earlier OpExtInstImport.
+                        // If the earlier ExtInstSet was unsupported we would have emitted an error then.
+                        return Err(Error::InvalidExtInst(set_id));
+                    };
+
+                    let gl_op = Glo::from_u32(inst_id).ok_or(Error::UnsupportedExtInst(inst_id, ext_name))?;
 
                     let fun = match gl_op {
                         Glo::Round => Mf::Round,
@@ -1767,14 +1776,14 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         Glo::FindILsb => Mf::FirstTrailingBit,
                         Glo::FindUMsb | Glo::FindSMsb => Mf::FirstLeadingBit,
                         // TODO: https://github.com/gfx-rs/naga/issues/2526
-                        Glo::Modf | Glo::Frexp => return Err(Error::UnsupportedExtInst(inst_id)),
+                        Glo::Modf | Glo::Frexp => return Err(Error::UnsupportedExtInst(inst_id, ext_name)),
                         Glo::IMix
                         | Glo::PackDouble2x32
                         | Glo::UnpackDouble2x32
                         | Glo::InterpolateAtCentroid
                         | Glo::InterpolateAtSample
                         | Glo::InterpolateAtOffset => {
-                            return Err(Error::UnsupportedExtInst(inst_id))
+                            return Err(Error::UnsupportedExtInst(inst_id, ext_name))
                         }
                     };
 

@@ -2104,6 +2104,21 @@ impl<'a, W: Write> Writer<'a, W> {
                 self.write_image_atomic(ctx, image, coordinate, array_index, fun, value)?
             }
             Statement::RayQuery { .. } => unreachable!(),
+            Statement::DebugPrintf {
+                ref format,
+                ref arguments,
+            } => {
+                if self
+                    .options
+                    .writer_flags
+                    .contains(WriterFlags::EMIT_DEBUG_PRINTF)
+                {
+                    write!(self.out, "{level}")?;
+                    write!(self.out, "debugPrintfEXT(\"{format}\",")?;
+                    self.write_slice(arguments, |this, _, arg| this.write_expr(*arg, ctx))?;
+                    writeln!(self.out, ");")?
+                }
+            }
             Statement::SubgroupBallot { result, predicate } => {
                 write!(self.out, "{level}")?;
                 let res_name = Baked(result).to_string();

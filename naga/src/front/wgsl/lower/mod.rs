@@ -3652,7 +3652,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                 }
                 "debugPrintf" => {
                     let format_expr = arguments.first().ok_or(Error::WrongArgumentCount {
-                        span,
+                        span: function_span,
                         expected: 1..16,
                         found: 0,
                     })?;
@@ -3671,7 +3671,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                         .skip(1)
                         .map(|&arg| self.expression(arg, ctx))
                         .collect::<Result<Vec<_>>>()?;
-                    let rctx = ctx.runtime_expression_ctx(span)?;
+                    let rctx = ctx.runtime_expression_ctx(function_span)?;
 
                     rctx.block
                         .extend(rctx.emitter.finish(&rctx.function.expressions));
@@ -3681,10 +3681,10 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                         .push(crate::Statement::DebugPrintf {
                             format: format.parse().map_err(|err| Error::InvalidPrintfFormatString {
                                 inner: err,
-                                span,
+                                span: function_span,
                             })?,
                             arguments,
-                        }, span);
+                        }, function_span);
 
                     return Ok(None);
                 }

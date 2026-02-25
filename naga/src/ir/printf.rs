@@ -377,7 +377,10 @@ fn take_numeric_param(s: &str) -> (PrecisionParam, &str) {
                 }
                 s = &s[1..];
             }
-            (PrecisionParam::Literal(w), s)
+            if w > 255 {
+                // todo error
+            }
+            (PrecisionParam::Literal(w as u8), s)
         }
         _ => (PrecisionParam::Literal(0), s),
     }

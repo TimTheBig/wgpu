@@ -661,7 +661,7 @@ impl super::Writer {
                 // Clamp the values
                 let id = self.id_gen.next();
                 block.body.push(Instruction::ext_inst_gl_op(
-                    self.gl450_ext_inst_id,
+                    self.extension_inst_import("GLSL.std.450"),
                     spirv::GLOp::UMin,
                     u32_id,
                     id,

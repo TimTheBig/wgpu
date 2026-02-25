@@ -367,7 +367,7 @@ impl BlockContext<'_> {
         // BoundsCheckPolicy::Restrict.
         let restricted_index_id = self.gen_id();
         block.body.push(Instruction::ext_inst_gl_op(
-            self.writer.gl450_ext_inst_id,
+            self.writer.extension_inst_import("GLSL.std.450"),
             spirv::GLOp::UMin,
             self.writer.get_u32_type_id(),
             restricted_index_id,

@@ -44,7 +44,6 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
             "NonSemantic.DebugPrintf" => self.parse_ext_inst_debug_printf(
                 ext_name, inst, ext_inst, span, ctx, emitter, block, body_idx,
             ),
-
             _ => Err(Error::UnsupportedExtInst(ext_inst.inst_id, ext_name)),
         }
     }

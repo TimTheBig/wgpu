@@ -160,7 +160,7 @@ impl Writer {
         use core::mem::take;
 
         let mut id_gen = IdGenerator::default();
-        let mut ext_inst_ids = take(&mut self.ext_inst_ids).recycle();
+        let mut ext_inst_ids = take(&mut self.ext_inst_ids).reclaim();
         ext_inst_ids.insert("GLSL.std.450", id_gen.next());
         let void_type = id_gen.next();
 
@@ -184,7 +184,7 @@ impl Writer {
             id_gen,
             void_type,
             tuple_of_u32s_ty_id: None,
-            gl450_ext_inst_id,
+            ext_inst_ids,
 
             // Reclaimed:
             capabilities_used: take(&mut self.capabilities_used).reclaim(),
