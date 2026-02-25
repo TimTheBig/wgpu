@@ -59,8 +59,7 @@ impl Display for ConversionSpecifier {
 #[cfg_attr(feature = "deserialize", derive(Deserialize))]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub(crate) enum PrecisionParam {
-    Literal(i32),
-    // todo what does this mean, document
+    Literal(u8),
     /// Use the default precision for the conversion type,
     /// will never be present in fully parsed format strings
     FromArgument,
@@ -260,13 +259,16 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
                     match s_lit.chars().next() {
                         // Convert ASCII digit to its integer value
                         Some(d) if d.is_ascii_digit() => {
-                            p = 10 * p + ((d as i32) - ('0' as i32));
+                            p = 10 * p + ((d as u8) - (b'0')) as u32;
                             s_lit = &s_lit[1..];
                         }
                         _ => break,
                     }
                 }
-                spec.precision = PrecisionParam::Literal(p);
+                if p > 255 {
+                    // todo error must be less then 255
+                }
+                spec.precision = PrecisionParam::Literal(p as u8);
                 s = s_lit;
             }
         }

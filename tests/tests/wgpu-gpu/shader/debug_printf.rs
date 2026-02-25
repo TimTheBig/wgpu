@@ -22,6 +22,7 @@ static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
         // SAFETY: WGPU tests are run one at a time
         unsafe {
             std::env::set_var("VK_LAYER_PRINTF_ENABLE", "1");
+            std::env::set_var("VK_LAYER_PATH", "/usr/local/share/vulkan/explicit_layer.d");
         }
 
         let pll = ctx

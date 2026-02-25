@@ -99,7 +99,7 @@ unsafe extern "system" fn debug_utils_messenger_callback(
         // extract vk printf message marker
         if let Some((_, printf_message)) = message.split_once("DebugPrintf:\n") {
             if level == log::Level::Info {
-                log::info!("DEBUG PRINTF: {}", printf_message);
+                log::info!("DEBUG PRINTF: {printf_message}");
             }
         } else {
             log::log!(
