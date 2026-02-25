@@ -82,7 +82,6 @@ fn test_vertex_attr_array() {
 macro_rules! include_spirv_source {
     ($($token:tt)*) => {
         {
-            // FIXME(MSRV): when bumping to 1.89, use [u8; _] here
             const SPIRV_SOURCE: [
                 u8;
                 $crate::__macro_helpers::include_bytes!($($token)*).len()
@@ -116,7 +115,6 @@ fn make_spirv_be_pass() {
 macro_rules! include_spirv {
     ($($token:tt)*) => {
         {
-            //log::info!("including '{}'", $($token)*);
             $crate::ShaderModuleDescriptor {
                 label: Some($($token)*),
                 source: $crate::ShaderSource::SpirV(
@@ -131,24 +129,22 @@ macro_rules! include_spirv {
 #[expect(dead_code)]
 static SPIRV: crate::ShaderModuleDescriptor<'_> = include_spirv!("le-aligned.spv");
 
-/// Macro to load raw SPIR-V data statically, for use with [`Features::EXPERIMENTAL_PASSTHROUGH_SHADERS`].
+/// Macro to load raw SPIR-V data statically, for use with [`Features::PASSTHROUGH_SHADERS`].
 ///
 /// It ensures the word alignment as well as the magic number.
 ///
-/// [`Features::EXPERIMENTAL_PASSTHROUGH_SHADERS`]: crate::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS
+/// [`Features::PASSTHROUGH_SHADERS`]: crate::Features::PASSTHROUGH_SHADERS
 #[macro_export]
 macro_rules! include_spirv_raw {
     ($($token:tt)*) => {
         {
-            //log::info!("including '{}'", $($token)*);
             $crate::ShaderModuleDescriptorPassthrough {
                 label: $crate::__macro_helpers::Some($($token)*),
                 spirv: Some($crate::__macro_helpers::Cow::Borrowed($crate::include_spirv_source!($($token)*))),
-                entry_point: $crate::__macro_helpers::String::new(),
                 // This is unused for SPIR-V
                 num_workgroups: (0, 0, 0),
-                runtime_checks: $crate::ShaderRuntimeChecks::unchecked(),
                 dxil: None,
+                metallib: None,
                 msl: None,
                 hlsl: None,
                 glsl: None,
@@ -177,7 +173,6 @@ static SPIRV_RAW: crate::ShaderModuleDescriptorPassthrough<'_> =
 macro_rules! include_wgsl {
     ($($token:tt)*) => {
         {
-            //log::info!("including '{}'", $($token)*);
             $crate::ShaderModuleDescriptor {
                 label: $crate::__macro_helpers::Some($($token)*),
                 source: $crate::ShaderSource::Wgsl($crate::__macro_helpers::Cow::Borrowed($crate::__macro_helpers::include_str!($($token)*))),
@@ -193,8 +188,6 @@ macro_rules! include_wgsl {
 // so cannot have more than one line, so cannot use internal cfgs.
 
 /// Helper macro to generate the documentation for dx12 hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(dx12)]
 macro_rules! hal_type_dx12 {
     ($ty: literal) => {
@@ -202,18 +195,15 @@ macro_rules! hal_type_dx12 {
     };
 }
 /// Helper macro to generate the documentation for dx12 hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(not(dx12))]
 macro_rules! hal_type_dx12 {
     ($ty: literal) => {
         concat!("- `hal::api::Dx12` uses `hal::dx12::", $ty, "`")
     };
 }
+pub(crate) use hal_type_dx12;
 
 /// Helper macro to generate the documentation for metal hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(metal)]
 macro_rules! hal_type_metal {
     ($ty: literal) => {
@@ -221,18 +211,15 @@ macro_rules! hal_type_metal {
     };
 }
 /// Helper macro to generate the documentation for metal hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(not(metal))]
 macro_rules! hal_type_metal {
     ($ty: literal) => {
         concat!("- `hal::api::Metal` uses `hal::metal::", $ty, "`")
     };
 }
+pub(crate) use hal_type_metal;
 
 /// Helper macro to generate the documentation for vulkan hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(vulkan)]
 macro_rules! hal_type_vulkan {
     ($ty: literal) => {
@@ -240,18 +227,15 @@ macro_rules! hal_type_vulkan {
     };
 }
 /// Helper macro to generate the documentation for vulkan hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(not(vulkan))]
 macro_rules! hal_type_vulkan {
     ($ty: literal) => {
         concat!("- `hal::api::Vulkan` uses `hal::vulkan::", $ty, "`")
     };
 }
+pub(crate) use hal_type_vulkan;
 
 /// Helper macro to generate the documentation for gles hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(gles)]
 macro_rules! hal_type_gles {
     ($ty: literal) => {
@@ -259,14 +243,13 @@ macro_rules! hal_type_gles {
     };
 }
 /// Helper macro to generate the documentation for gles hal methods, referencing the hal type.
-#[macro_export]
-#[doc(hidden)]
 #[cfg(not(gles))]
 macro_rules! hal_type_gles {
     ($ty: literal) => {
         concat!("- `hal::api::Gles` uses `hal::gles::", $ty, "`")
     };
 }
+pub(crate) use hal_type_gles;
 
 #[doc(hidden)]
 pub mod helpers {

@@ -187,7 +187,7 @@ impl crate::framework::Example for Example {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
+            immediate_size: 0,
         });
 
         // Create the render pipelines
@@ -218,7 +218,7 @@ impl crate::framework::Example for Example {
                 bias: wgpu::DepthBiasState::default(),
             }),
             multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
         let entity_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -252,7 +252,7 @@ impl crate::framework::Example for Example {
                 bias: wgpu::DepthBiasState::default(),
             }),
             multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 
@@ -372,7 +372,7 @@ impl crate::framework::Example for Example {
             uniform_buf,
             entities,
             depth_view,
-            staging_belt: wgpu::util::StagingBelt::new(0x100),
+            staging_belt: wgpu::util::StagingBelt::new(device.clone(), 0x100),
         }
     }
 
@@ -411,7 +411,6 @@ impl crate::framework::Example for Example {
                 &self.uniform_buf,
                 0,
                 wgpu::BufferSize::new((raw_uniforms.len() * 4) as wgpu::BufferAddress).unwrap(),
-                device,
             )
             .copy_from_slice(bytemuck::cast_slice(&raw_uniforms));
 
@@ -444,6 +443,7 @@ impl crate::framework::Example for Example {
                 }),
                 timestamp_writes: None,
                 occlusion_query_set: None,
+                multiview_mask: None,
             });
 
             rpass.set_bind_group(0, &self.bind_group, &[]);
@@ -505,7 +505,7 @@ pub static TEST_ETC2: crate::framework::ExampleTestParams = crate::framework::Ex
     height: 768,
     optional_features: wgpu::Features::TEXTURE_COMPRESSION_ETC2,
     base_test_parameters: wgpu_test::TestParameters::default(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.015)],
+    comparisons: &[wgpu_test::ComparisonType::Mean(0.016)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };
 
@@ -518,6 +518,6 @@ pub static TEST_ASTC: crate::framework::ExampleTestParams = crate::framework::Ex
     height: 768,
     optional_features: wgpu::Features::TEXTURE_COMPRESSION_ASTC,
     base_test_parameters: wgpu_test::TestParameters::default(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.016)],
+    comparisons: &[wgpu_test::ComparisonType::Mean(0.017)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };

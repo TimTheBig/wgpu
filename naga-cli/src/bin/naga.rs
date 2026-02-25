@@ -1,6 +1,4 @@
-#![allow(clippy::manual_strip)]
 use anyhow::{anyhow, Context as _};
-#[allow(unused_imports)]
 use std::fs;
 use std::{error::Error, fmt, io::Read, path::Path, str::FromStr};
 
@@ -63,6 +61,12 @@ struct Args {
     /// May be `50`, `51`, or `60`
     #[argh(option)]
     shader_model: Option<ShaderModelArg>,
+
+    /// the SPIR-V version to use if targeting SPIR-V
+    ///
+    /// For example, 1.0, 1.4, etc
+    #[argh(option)]
+    spirv_version: Option<SpirvVersionArg>,
 
     /// the shader stage, for example 'frag', 'vert', or 'compute'.
     /// if the shader stage is unspecified it will be derived from
@@ -140,6 +144,42 @@ struct Args {
     /// defines to be passed to the parser (only glsl is supported)
     #[argh(option, short = 'D')]
     defines: Vec<Defines>,
+
+    /// capabilities for parsing and validation.
+    ///
+    /// Can be a comma-separated list of capability names (e.g.,
+    /// "shader_float16,dual_source_blending"), a numeric bitflags value (e.g.,
+    /// "67108864"), the string "none", or the string "all".
+    #[argh(option, default = "CapabilitiesArg(naga::valid::Capabilities::all())")]
+    capabilities: CapabilitiesArg,
+
+    /// the limits on the task shader dispatch size
+    #[argh(option, default = "TaskDispatchLimitsArg(None)")]
+    task_limits: TaskDispatchLimitsArg,
+
+    /// whether or not the mesh shader output should be validated.
+    #[argh(option, default = "true")]
+    validate_mesh_output: bool,
+}
+
+/// Newtype so we can implement [`FromStr`] for `Option<TaskDispatchLimits>`.
+#[derive(Debug, Clone, Copy)]
+struct TaskDispatchLimitsArg(Option<naga::back::TaskDispatchLimits>);
+
+impl FromStr for TaskDispatchLimitsArg {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let values = s
+            .split_once(",")
+            .ok_or_else(|| format!("No comma present for --task-limits value: {s}"))?;
+        let x = values.0.parse::<u32>().map_err(|e| e.to_string())?;
+        let y = values.1.parse::<u32>().map_err(|e| e.to_string())?;
+        Ok(Self(Some(naga::back::TaskDispatchLimits {
+            max_mesh_workgroups_per_dim: x,
+            max_mesh_workgroups_total: y,
+        })))
+    }
 }
 
 /// Newtype so we can implement [`FromStr`] for `BoundsCheckPolicy`.
@@ -186,6 +226,22 @@ impl FromStr for ShaderModelArg {
             "67" => ShaderModel::V6_7,
             _ => return Err(format!("Invalid value for --shader-model: {s}")),
         }))
+    }
+}
+
+#[derive(Debug, Clone)]
+struct SpirvVersionArg(u8, u8);
+
+impl FromStr for SpirvVersionArg {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let dot = s
+            .find(".")
+            .ok_or_else(|| "Missing dot separator".to_owned())?;
+        let major = s[..dot].parse::<u8>().map_err(|e| e.to_string())?;
+        let minor = s[dot + 1..].parse::<u8>().map_err(|e| e.to_string())?;
+        Ok(Self(major, minor))
     }
 }
 
@@ -238,10 +294,10 @@ impl FromStr for GlslProfileArg {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use naga::back::glsl::Version;
-        Ok(Self(if s.starts_with("core") {
-            Version::Desktop(s[4..].parse().unwrap_or(330))
-        } else if s.starts_with("es") {
-            Version::new_gles(s[2..].parse().unwrap_or(310))
+        Ok(Self(if let Some(s) = s.strip_prefix("core") {
+            Version::Desktop(s.parse().unwrap_or(330))
+        } else if let Some(s) = s.strip_prefix("es") {
+            Version::new_gles(s.parse().unwrap_or(310))
         } else {
             return Err(format!("Unknown profile: {s}"));
         }))
@@ -314,6 +370,37 @@ impl FromStr for Defines {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct CapabilitiesArg(naga::valid::Capabilities);
+
+impl FromStr for CapabilitiesArg {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use naga::valid::Capabilities;
+
+        let s = s.to_uppercase();
+
+        if s == "NONE" {
+            Ok(Self(Capabilities::empty()))
+        } else if s == "ALL" {
+            Ok(Self(Capabilities::all()))
+        } else if let Ok(bits) = s.parse::<u64>() {
+            Capabilities::from_bits(bits)
+                .map(Self)
+                .ok_or_else(|| format!("Invalid capabilities bitflags value: {bits}"))
+        } else {
+            s.split(',')
+                .try_fold(Capabilities::empty(), |acc, s| {
+                    Capabilities::from_name(s.trim())
+                        .map(|cap| acc | cap)
+                        .ok_or(format!("Unknown capability {}", s.trim()))
+                })
+                .map(Self)
+        }
+    }
+}
+
 #[derive(Default)]
 struct Parameters<'a> {
     validation_flags: naga::valid::ValidationFlags,
@@ -330,6 +417,7 @@ struct Parameters<'a> {
     input_kind: Option<InputKind>,
     shader_stage: Option<ShaderStage>,
     defines: FastHashMap<String, String>,
+    capabilities: naga::valid::Capabilities,
 
     /// We use this copy of `args.compact` to know whether we should pass the
     /// entrypoint to `process_overrides`, which will result in removal from
@@ -465,6 +553,9 @@ fn run() -> anyhow::Result<()> {
     if let Some(ref version) = args.metal_version {
         params.msl.lang_version = version.0;
     }
+    if let Some(ref version) = args.spirv_version {
+        params.spv_out.lang_version = (version.0, version.1);
+    }
     params.keep_coordinate_space = args.keep_coordinate_space;
 
     params.dot.cfg_only = args.dot_cfg_only;
@@ -480,6 +571,10 @@ fn run() -> anyhow::Result<()> {
     );
 
     params.compact = args.compact;
+    params.capabilities = args.capabilities.0;
+
+    params.spv_out.mesh_shader_primitive_indices_clamp = args.validate_mesh_output;
+    params.spv_out.task_dispatch_limits = args.task_limits.0;
 
     if args.bulk_validate {
         return bulk_validate(&args, &params);
@@ -533,19 +628,21 @@ fn run() -> anyhow::Result<()> {
     let output_paths = files;
 
     // Decide which capabilities our output formats can support.
-    let validation_caps =
-        output_paths
-            .clone()
-            .fold(naga::valid::Capabilities::all(), |caps, path| {
-                use naga::valid::Capabilities as C;
-                let missing = match Path::new(path).extension().and_then(|ex| ex.to_str()) {
-                    Some("wgsl") => C::CLIP_DISTANCE | C::CULL_DISTANCE,
-                    Some("metal") => C::CULL_DISTANCE,
-                    Some("hlsl") => C::empty(),
-                    _ => C::TEXTURE_EXTERNAL,
-                };
-                caps & !missing
-            });
+    let validation_caps = output_paths
+        .clone()
+        .fold(params.capabilities, |caps, path| {
+            use naga::valid::Capabilities as C;
+            let allowed = match Path::new(path).extension().and_then(|ex| ex.to_str()) {
+                Some("wgsl") => naga::back::wgsl::supported_capabilities(),
+                Some("metal") => naga::back::msl::supported_capabilities(),
+                Some("hlsl") => naga::back::hlsl::supported_capabilities(),
+                Some("spv") | Some("spirv") => naga::back::spv::supported_capabilities(),
+                Some("glsl") | Some("frag") | Some("vert") | Some("comp") | Some("task")
+                | Some("mesh") => naga::back::glsl::supported_capabilities(),
+                _ => C::all() - C::TEXTURE_EXTERNAL,
+            };
+            caps & allowed
+        });
 
     // Validate the IR before compaction.
     let info = match naga::valid::Validator::new(params.validation_flags, validation_caps)
@@ -657,7 +754,12 @@ fn parse_input(input_path: &Path, input: Vec<u8>, params: &Parameters) -> anyhow
         },
         InputKind::Wgsl => {
             let input = String::from_utf8(input)?;
-            let result = naga::front::wgsl::parse_str(&input);
+            let options = naga::front::wgsl::Options {
+                parse_doc_comments: false,
+                capabilities: params.capabilities,
+            };
+            let mut frontend = naga::front::wgsl::Frontend::new_with_options(options);
+            let result = frontend.parse(&input);
             match result {
                 Ok(v) => Parsed {
                     module: v,
@@ -936,7 +1038,7 @@ fn bulk_validate(args: &Args, params: &Parameters) -> anyhow::Result<()> {
         };
 
         let mut validator =
-            naga::valid::Validator::new(params.validation_flags, naga::valid::Capabilities::all());
+            naga::valid::Validator::new(params.validation_flags, params.capabilities);
         validator.subgroup_stages(naga::valid::ShaderStages::all());
         validator.subgroup_operations(naga::valid::SubgroupOperationSet::all());
 

@@ -9,19 +9,18 @@ repository.workspace = true
 keywords.workspace = true
 license.workspace = true
 
-# Override the workspace's `rust-version` key. Firefox uses `cargo vendor` to
-# copy the crates it actually uses out of the workspace, so it's meaningful for
-# them to have less restrictive MSRVs individually than the workspace as a
-# whole, if their code permits. See `../README.md` for details.
-rust-version = "1.82.0"
+# Override the workspace's `rust-version` key. `wgpu-core` and its dependencies
+# have a less strict MSRV, to allow firefox more leeway in updating their Rust toolchain.
+#
+# See the repo README for more information on MSRV policy.
+rust-version = "1.87"
 
 [package.metadata.docs.rs]
 # Ideally we would enable all the features.
 #
-# However, the metal features fail to be documented because the docs.rs runner cross-compiling under
-# x86_64-unknown-linux-gnu and metal-rs cannot compile in that environment at the moment. The same applies
-# for the dx12 feature.
-features = ["vulkan", "gles", "renderdoc"]
+# However, the dx12 features fail to be documented because the docs.rs runner cross-compiling under
+# x86_64-unknown-linux-gnu cannot compile in that environment at the moment.
+features = ["metal", "vulkan", "gles", "renderdoc"]
 rustdoc-args = ["--cfg", "docsrs"]
 targets = [
     "x86_64-unknown-linux-gnu",
@@ -60,7 +59,7 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 # exclude the Vulkan backend on MacOS unless a separate feature `vulkan-portability` is enabled. In response
 # to these features, it enables features of platform specific crates. For example, the `vulkan` feature in wgpu-core
 # enables the `vulkan` feature in `wgpu-core-deps-windows-linux-android` which in turn enables the
-# `vulkan` feature in `wgpu-hal` _only_ on those platforms. If you enable the `vulkan-portability` feature, it 
+# `vulkan` feature in `wgpu-hal` _only_ on those platforms. If you enable the `vulkan-portability` feature, it
 # will enable the `vulkan` feature in `wgpu-core-deps-apple`. The only way to do this is unfortunately to have
 # a separate crate for each platform category that participates in the feature unification.
 #
@@ -75,15 +74,20 @@ metal = [
     # Metal is only available on Apple platforms, therefore request MSL output also only if we target an Apple platform.
     "naga/msl-out",
     "dep:arrayvec",
-    "dep:block",
-    "dep:core-graphics-types",
+    "dep:block2",
+    "dep:bytemuck",
     "dep:hashbrown",
     "dep:libc",
     "dep:log",
-    "dep:metal",
-    "dep:objc",
+    "dep:objc2",
+    "dep:objc2-core-foundation",
+    "dep:objc2-foundation",
+    "dep:objc2-metal",
+    "dep:objc2-quartz-core",
     "dep:parking_lot",
     "dep:profiling",
+    "dep:smallvec",
+    "dep:raw-window-metal",
 ]
 vulkan = [
     "naga/spv-out",
@@ -91,7 +95,6 @@ vulkan = [
     "dep:arrayvec",
     "dep:ash",
     "dep:bytemuck",
-    "dep:gpu-alloc",
     "dep:gpu-descriptor",
     "dep:hashbrown",
     "dep:libc",
@@ -100,8 +103,10 @@ vulkan = [
     "dep:ordered-float",
     "dep:parking_lot",
     "dep:profiling",
+    "dep:raw-window-metal",
     "dep:smallvec",
     "dep:windows",
+    "gpu-allocator/vulkan",
     "windows/Win32",
 ]
 gles = [
@@ -113,10 +118,11 @@ gles = [
     "dep:hashbrown",
     "dep:js-sys",
     "dep:khronos-egl",
+    "dep:wayland-sys",
     "dep:libloading",
     "dep:log",
     "dep:ndk-sys",
-    "dep:objc",
+    "dep:objc2",
     "dep:parking_lot",
     "dep:profiling",
     "dep:wasm-bindgen",
@@ -223,9 +229,10 @@ glow = { workspace = true, optional = true }
 ########################
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Backend: Vulkan and Dx12
+gpu-allocator = { workspace = true, optional = true }
 # Backend: Vulkan
 ash = { workspace = true, optional = true }
-gpu-alloc = { workspace = true, optional = true }
 gpu-descriptor = { workspace = true, optional = true }
 smallvec = { workspace = true, optional = true, features = ["union"] }
 # Backend: GLES
@@ -240,6 +247,12 @@ renderdoc-sys = { workspace = true, optional = true }
 [target.'cfg(unix)'.dependencies]
 # Backend: Vulkan
 libc = { workspace = true, optional = true }
+# backend: GLES
+wayland-sys = { version = "0.31.3", features = [
+    "client",
+    "dlopen",
+    "egl",
+], optional = true }
 
 #########################
 ### Platform: Windows ###
@@ -252,16 +265,16 @@ windows-core = { workspace = true, optional = true }
 # Backend: Dx12
 bit-set = { workspace = true, optional = true }
 range-alloc = { workspace = true, optional = true }
-gpu-allocator = { workspace = true, optional = true, features = ["d3d12"] }
 once_cell = { workspace = true, optional = true }
 # backend: GLES
 glutin_wgl_sys = { workspace = true, optional = true }
 
 ### Platform: x86/x86_64 Windows ###
 # This doesn't support aarch64. See https://github.com/gfx-rs/wgpu/issues/6860.
+# This doesn't support x86_64-pc-windows-gnu. See https://github.com/gfx-rs/wgpu/issues/8303
 #
 # ⚠️ Keep in sync with static_dxc cfg in build.rs and cfg_alias in `wgpu` crate ⚠️
-[target.'cfg(all(windows, not(target_arch = "aarch64")))'.dependencies]
+[target.'cfg(all(windows, not(target_arch = "aarch64"), target_env = "msvc"))'.dependencies]
 mach-dxcompiler-rs = { workspace = true, optional = true }
 
 #######################
@@ -270,10 +283,16 @@ mach-dxcompiler-rs = { workspace = true, optional = true }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 # Backend: Metal
-block = { workspace = true, optional = true }
-core-graphics-types = { workspace = true, optional = true }
-metal = { workspace = true, optional = true }
-objc = { workspace = true, optional = true }
+block2 = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true }
+objc2 = { workspace = true, optional = true }
+objc2-core-foundation = { workspace = true, optional = true }
+objc2-foundation = { workspace = true, optional = true }
+objc2-metal = { workspace = true, optional = true }
+objc2-quartz-core = { workspace = true, optional = true }
+
+# backend: Metal + Vulkan
+raw-window-metal = { workspace = true, optional = true }
 
 #########################
 ### Platform: Android ###
@@ -326,6 +345,7 @@ cfg_aliases.workspace = true
 [dev-dependencies]
 env_logger.workspace = true
 glam.workspace = true                                            # for ray-traced-triangle example
+log.workspace = true
 naga = { workspace = true, features = ["wgsl-in", "termcolor"] }
 winit.workspace = true                                           # for "halmark" example
 

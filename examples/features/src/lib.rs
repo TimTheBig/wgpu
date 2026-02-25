@@ -8,6 +8,7 @@ pub mod big_compute_buffers;
 pub mod boids;
 pub mod bunnymark;
 pub mod conservative_raster;
+pub mod cooperative_matrix;
 pub mod cube;
 pub mod hello_synchronization;
 pub mod hello_triangle;
@@ -17,6 +18,7 @@ pub mod mesh_shader;
 pub mod mipmap;
 pub mod msaa_line;
 pub mod multiple_render_targets;
+pub mod multiview;
 pub mod ray_cube_compute;
 pub mod ray_cube_fragment;
 pub mod ray_cube_normals;
@@ -48,6 +50,7 @@ fn all_tests() -> Vec<wgpu_test::GpuTestInitializer> {
         cube::TEST,
         cube::TEST_LINES,
         hello_synchronization::tests::SYNC,
+        mesh_shader::TEST,
         mipmap::TEST,
         mipmap::TEST_QUERY,
         msaa_line::TEST,
@@ -78,6 +81,7 @@ fn all_tests() -> Vec<wgpu_test::GpuTestInitializer> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         test_list.push(big_compute_buffers::tests::TWO_BUFFERS);
+        test_list.push(cooperative_matrix::tests::COOPERATIVE_MATRIX);
     }
 
     test_list

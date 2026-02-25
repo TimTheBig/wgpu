@@ -257,10 +257,10 @@ impl Buffer {
     ///
     /// The returned type depends on the backend:
     ///
-    #[doc = crate::hal_type_vulkan!("Buffer")]
-    #[doc = crate::hal_type_metal!("Buffer")]
-    #[doc = crate::hal_type_dx12!("Buffer")]
-    #[doc = crate::hal_type_gles!("Buffer")]
+    #[doc = crate::macros::hal_type_vulkan!("Buffer")]
+    #[doc = crate::macros::hal_type_metal!("Buffer")]
+    #[doc = crate::macros::hal_type_dx12!("Buffer")]
+    #[doc = crate::macros::hal_type_gles!("Buffer")]
     ///
     /// # Deadlocks
     ///
@@ -377,8 +377,8 @@ impl Buffer {
     /// - If the buffer is already mapped.
     /// - If the buffer’s [`BufferUsages`] do not allow the requested [`MapMode`].
     /// - If `bounds` is outside of the bounds of `self`.
-    /// - If `bounds` has a length less than 1.
-    /// - If the start and end of `bounds` are not be aligned to [`MAP_ALIGNMENT`].
+    /// - If `bounds` does not start at a multiple of [`MAP_ALIGNMENT`].
+    /// - If `bounds` has a length that is not a multiple of 4 greater than 0.
     ///
     /// [CEmbos]: CommandEncoder::map_buffer_on_submit
     /// [CBmbos]: CommandBuffer::map_buffer_on_submit
@@ -409,8 +409,8 @@ impl Buffer {
     /// # Panics
     ///
     /// - If `bounds` is outside of the bounds of `self`.
-    /// - If `bounds` has a length less than 1.
-    /// - If the start and end of `bounds` are not aligned to [`MAP_ALIGNMENT`].
+    /// - If `bounds` does not start at a multiple of [`MAP_ALIGNMENT`].
+    /// - If `bounds` has a length that is not a multiple of 4 greater than 0.
     /// - If the buffer to which `self` refers is not currently [mapped].
     /// - If you try to create a view which overlaps an existing [`BufferViewMut`].
     ///
@@ -433,8 +433,8 @@ impl Buffer {
     /// # Panics
     ///
     /// - If `bounds` is outside of the bounds of `self`.
-    /// - If `bounds` has a length less than 1.
-    /// - If the start and end of `bounds` are not aligned to [`MAP_ALIGNMENT`].
+    /// - If `bounds` does not start at a multiple of [`MAP_ALIGNMENT`].
+    /// - If `bounds` has a length that is not a multiple of 4 greater than 0.
     /// - If the buffer to which `self` refers is not currently [mapped].
     /// - If you try to create a view which overlaps an existing [`BufferView`] or [`BufferViewMut`].
     ///
@@ -553,7 +553,8 @@ impl<'a> BufferSlice<'a> {
     ///
     /// - If the buffer is already mapped.
     /// - If the buffer’s [`BufferUsages`] do not allow the requested [`MapMode`].
-    /// - If the endpoints of this slice are not aligned to [`MAP_ALIGNMENT`] within the buffer.
+    /// - If the beginning of this slice is not aligned to [`MAP_ALIGNMENT`] within the buffer.
+    /// - If the length of this slice is not a multiple of 4.
     ///
     /// [CEmbos]: CommandEncoder::map_buffer_on_submit
     /// [CBmbos]: CommandBuffer::map_buffer_on_submit
@@ -571,6 +572,7 @@ impl<'a> BufferSlice<'a> {
         assert_eq!(mc.mapped_range, 0..0, "Buffer is already mapped");
         let end = self.offset + self.size.get();
         mc.mapped_range = self.offset..end;
+        drop(mc); // release the lock of map_context as callback can call lock it again
 
         self.buffer
             .inner
@@ -589,7 +591,8 @@ impl<'a> BufferSlice<'a> {
     ///
     /// # Panics
     ///
-    /// - If the endpoints of this slice are not aligned to [`MAP_ALIGNMENT`] within the buffer.
+    /// - If the beginning of this slice is not aligned to [`MAP_ALIGNMENT`] within the buffer.
+    /// - If the length of this slice is not a multiple of 4.
     /// - If the buffer to which `self` refers is not currently [mapped].
     /// - If you try to create a view which overlaps an existing [`BufferViewMut`].
     ///
@@ -622,7 +625,8 @@ impl<'a> BufferSlice<'a> {
     ///
     /// # Panics
     ///
-    /// - If the endpoints of this slice are not aligned to [`MAP_ALIGNMENT`].
+    /// - If the beginning of this slice is not aligned to [`MAP_ALIGNMENT`] within the buffer.
+    /// - If the length of this slice is not a multiple of 4.
     /// - If the buffer to which `self` refers is not currently [mapped].
     /// - If you try to create a view which overlaps an existing [`BufferView`] or [`BufferViewMut`].
     ///
@@ -640,7 +644,6 @@ impl<'a> BufferSlice<'a> {
             size: self.size,
             offset: self.offset,
             inner: range,
-            readable: self.buffer.usage.contains(BufferUsages::MAP_READ),
         }
     }
 
@@ -942,7 +945,6 @@ pub struct BufferViewMut {
     offset: BufferAddress,
     size: BufferSize,
     inner: dispatch::DispatchBufferMappedRange,
-    readable: bool,
 }
 
 impl AsMut<[u8]> for BufferViewMut {
@@ -956,10 +958,6 @@ impl Deref for BufferViewMut {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        if !self.readable {
-            log::warn!("Reading from a BufferViewMut is slow and not recommended.");
-        }
-
         self.inner.slice()
     }
 }

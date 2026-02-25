@@ -25,7 +25,7 @@ impl Counter {
 pub struct CustomInstance(pub Counter);
 
 impl InstanceInterface for CustomInstance {
-    fn new(__desc: &wgpu::InstanceDescriptor) -> Self
+    fn new(__desc: wgpu::InstanceDescriptor) -> Self
     where
         Self: Sized,
     {
@@ -80,6 +80,10 @@ impl AdapterInterface for CustomAdapter {
         Box::pin(std::future::ready(res))
     }
 
+    fn cooperative_matrix_properties(&self) -> Vec<wgpu::CooperativeMatrixProperties> {
+        Vec::new()
+    }
+
     fn is_surface_supported(&self, _surface: &DispatchSurface) -> bool {
         unimplemented!()
     }
@@ -121,6 +125,10 @@ impl DeviceInterface for CustomDevice {
     }
 
     fn limits(&self) -> wgpu::Limits {
+        unimplemented!()
+    }
+
+    fn adapter_info(&self) -> wgpu::AdapterInfo {
         unimplemented!()
     }
 
@@ -251,11 +259,11 @@ impl DeviceInterface for CustomDevice {
         unimplemented!()
     }
 
-    fn push_error_scope(&self, _filter: wgpu::ErrorFilter) {
+    fn push_error_scope(&self, _filter: wgpu::ErrorFilter) -> u32 {
         unimplemented!()
     }
 
-    fn pop_error_scope(&self) -> Pin<Box<dyn wgpu::custom::PopErrorScopeFuture>> {
+    fn pop_error_scope(&self, _index: u32) -> Pin<Box<dyn wgpu::custom::PopErrorScopeFuture>> {
         unimplemented!()
     }
 

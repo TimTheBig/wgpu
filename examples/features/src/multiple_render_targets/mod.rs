@@ -112,7 +112,7 @@ impl MultiTargetRenderer {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[&texture_bind_group_layout],
-            push_constant_ranges: &[],
+            immediate_size: 0,
         });
 
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
@@ -161,7 +161,7 @@ impl MultiTargetRenderer {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 
@@ -182,6 +182,7 @@ impl MultiTargetRenderer {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
         rpass.set_pipeline(&self.pipeline);
         rpass.set_bind_group(0, &self.bindgroup, &[]);
@@ -231,7 +232,7 @@ impl TargetRenderer {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[&texture_bind_group_layout],
-            push_constant_ranges: &[],
+            immediate_size: 0,
         });
 
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
@@ -266,7 +267,7 @@ impl TargetRenderer {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 
@@ -339,6 +340,7 @@ impl TargetRenderer {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
         rpass.set_pipeline(&self.pipeline);
         rpass.set_bind_group(0, &self.bindgroup_left, &[]);
@@ -544,6 +546,6 @@ pub static TEST: crate::framework::ExampleTestParams = crate::framework::Example
     optional_features: wgpu::Features::default(),
     base_test_parameters: wgpu_test::TestParameters::default(),
     // Bounded by lavapipe
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.005)],
+    comparisons: &[wgpu_test::ComparisonType::Mean(0.014)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };

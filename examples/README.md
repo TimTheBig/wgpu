@@ -1,6 +1,6 @@
 > [!NOTE]  
 > These are the examples for the development version of wgpu. If you want to see the examples for the latest crates.io release
-> of wgpu, go to the [latest release branch](https://github.com/gfx-rs/wgpu/tree/v27/examples#readme).
+> of wgpu, go to the [latest release branch](https://github.com/gfx-rs/wgpu/tree/v28/examples#readme).
 
 # Examples
 
@@ -23,7 +23,7 @@ be cloned out of the repository to serve as a starting point for your own projec
 You can also use [`cargo-generate`](https://github.com/cargo-generate/cargo-generate) to easily use these as a basis for your own projects.
 
 ```sh
-cargo generate gfx-rs/wgpu --branch v27
+cargo generate gfx-rs/wgpu --branch v28
 ```
 
 ## Framework Examples
@@ -42,7 +42,7 @@ These examples use a common framework to handle wgpu init, window creation, and 
 - `render_to_texture` - Renders to an image texture offscreen, demonstrating both off-screen rendering as well as how to add a sort of resolution-agnostic screenshot feature to an engine. This example either outputs an image file of your naming (pass command line arguments after specifying a `--` like `cargo run --bin wgpu-examples -- render_to_texture "test.png"`) or adds an `img` element containing the image to the page in WASM.
 - `ray_cube_fragment` - Demonstrates using ray queries with a fragment shader.
 - `ray_scene` - Demonstrates using ray queries and model loading
-- `ray_shadows` - Demonstrates a simple use of ray queries - high quality shadows - uses a light set with push constants to raytrace through an untransformed scene and detect whether there is something obstructing the light.
+- `ray_shadows` - Demonstrates a simple use of ray queries - high quality shadows - uses a light set with immediates to raytrace through an untransformed scene and detect whether there is something obstructing the light.
 - `mesh_shader` - Renders a triangle to a window with mesh shaders, while showcasing most mesh shader related features(task shaders, payloads, per primitive data).
 
 #### Compute

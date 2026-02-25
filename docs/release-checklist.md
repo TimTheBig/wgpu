@@ -36,7 +36,7 @@ Day of Release:
 - Checkout `trunk` with the merged PR.
 - Publish! These commands can be pasted directly into your terminal in a single command, and they will publish everything.
   ```bash
-    cargo +stable publish --workspace --exclude deno_webgpu
+    cargo publish --workspace --exclude deno_webgpu
   ```
 - If there were any newly published crates, ensure `github:gfx-rs/wgpu` is added as an owner of that crate.
 - Create a new tag called `vX.Y.Z` and push it to the repo.
@@ -54,7 +54,7 @@ Day of Release:
     - Add an AMA comment.
   - Include the r/rust post shortlink in the following posts as well:
   - [wgpu matrix](https://matrix.to/#/#wgpu:matrix.org)
-  - [Rust Gamedev Discord](https://discord.gg/yNtPTb2) in the #crates channel
+  - [Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ) in the #crates and #wgpu channel
   - [Bevy Discord](https://discord.com/invite/bevy) in the #rendering-dev channel
   - [Graphics Programming Discord](https://discord.gg/6mgNGk7) in the #webgpu channel
   - [Rust Community Discord](https://discord.gg/rust-lang-community) in the #games-and-graphics channel

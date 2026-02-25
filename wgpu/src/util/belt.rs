@@ -5,6 +5,9 @@ use crate::{
 use alloc::vec::Vec;
 use core::fmt;
 use std::sync::mpsc;
+use wgt::Features;
+
+use crate::COPY_BUFFER_ALIGNMENT;
 
 /// Efficiently performs many buffer writes by sharing and reusing temporary buffers.
 ///
@@ -22,7 +25,13 @@ use std::sync::mpsc;
 ///
 /// [`Queue::write_buffer_with()`]: crate::Queue::write_buffer_with
 pub struct StagingBelt {
+    device: Device,
     chunk_size: BufferAddress,
+    /// User-specified [`BufferUsages`] used to create the chunk buffers are created.
+    ///
+    /// [`new`](Self::new) guarantees that this always contains
+    /// [`MAP_WRITE`](BufferUsages::MAP_WRITE).
+    buffer_usages: BufferUsages,
     /// Chunks into which we are accumulating data to be transferred.
     active_chunks: Vec<Chunk>,
     /// Chunks that have scheduled transfers already; they are unmapped and some
@@ -48,10 +57,56 @@ impl StagingBelt {
     /// * 1-4 times less than the total amount of data uploaded per submission
     ///   (per [`StagingBelt::finish()`]); and
     /// * bigger is better, within these bounds.
-    pub fn new(chunk_size: BufferAddress) -> Self {
+    ///
+    /// The buffers returned by this [`StagingBelt`] will be have the buffer usages
+    /// [`COPY_SRC | MAP_WRITE`](crate::BufferUsages)
+    pub fn new(device: Device, chunk_size: BufferAddress) -> Self {
+        Self::new_with_buffer_usages(device, chunk_size, BufferUsages::COPY_SRC)
+    }
+
+    /// Create a new staging belt.
+    ///
+    /// The `chunk_size` is the unit of internal buffer allocation; writes will be
+    /// sub-allocated within each chunk. Therefore, for optimal use of memory, the
+    /// chunk size should be:
+    ///
+    /// * larger than the largest single [`StagingBelt::write_buffer()`] operation;
+    /// * 1-4 times less than the total amount of data uploaded per submission
+    ///   (per [`StagingBelt::finish()`]); and
+    /// * bigger is better, within these bounds.
+    ///
+    /// `buffer_usages` specifies the [`BufferUsages`] the staging buffers
+    /// will be created with. [`MAP_WRITE`](BufferUsages::MAP_WRITE) will be added
+    /// automatically. The method will panic if the combination of usages is not
+    /// supported. Because [`MAP_WRITE`](BufferUsages::MAP_WRITE) is implied, the allowed usages
+    /// depends on if [`Features::MAPPABLE_PRIMARY_BUFFERS`] is enabled.
+    /// - If enabled: any usage is valid.
+    /// - If disabled: only [`COPY_SRC`](BufferUsages::COPY_SRC) can be used.
+    #[track_caller]
+    pub fn new_with_buffer_usages(
+        device: Device,
+        chunk_size: BufferAddress,
+        mut buffer_usages: BufferUsages,
+    ) -> Self {
         let (sender, receiver) = mpsc::channel();
+
+        // make sure anything other than MAP_WRITE | COPY_SRC is only allowed with MAPPABLE_PRIMARY_BUFFERS.
+        let extra_usages =
+            buffer_usages.difference(BufferUsages::MAP_WRITE | BufferUsages::COPY_SRC);
+        if !extra_usages.is_empty()
+            && !device
+                .features()
+                .contains(Features::MAPPABLE_PRIMARY_BUFFERS)
+        {
+            panic!("Only BufferUsages::COPY_SRC may be used when Features::MAPPABLE_PRIMARY_BUFFERS is not enabled. Specified buffer usages: {buffer_usages:?}");
+        }
+        // always set MAP_WRITE
+        buffer_usages.insert(BufferUsages::MAP_WRITE);
+
         StagingBelt {
+            device,
             chunk_size,
+            buffer_usages,
             active_chunks: Vec::new(),
             closed_chunks: Vec::new(),
             free_chunks: Vec::new(),
@@ -63,6 +118,9 @@ impl StagingBelt {
     /// Allocate a staging belt slice of `size` to be copied into the `target` buffer
     /// at the specified offset.
     ///
+    /// `offset` and `size` must be multiples of [`COPY_BUFFER_ALIGNMENT`]
+    /// (as is required by the underlying buffer operations).
+    ///
     /// The upload will be placed into the provided command encoder. This encoder
     /// must be submitted after [`StagingBelt::finish()`] is called and before
     /// [`StagingBelt::recall()`] is called.
@@ -70,18 +128,25 @@ impl StagingBelt {
     /// If the `size` is greater than the size of any free internal buffer, a new buffer
     /// will be allocated for it. Therefore, the `chunk_size` passed to [`StagingBelt::new()`]
     /// should ideally be larger than every such size.
+    #[track_caller]
     pub fn write_buffer(
         &mut self,
         encoder: &mut CommandEncoder,
         target: &Buffer,
         offset: BufferAddress,
         size: BufferSize,
-        device: &Device,
     ) -> BufferViewMut {
+        // Asserting this explicitly gives a usefully more specific, and more prompt, error than
+        // leaving it to regular API validation.
+        // We check only `offset`, not `size`, because `self.allocate()` will check the size.
+        assert!(
+            offset.is_multiple_of(COPY_BUFFER_ALIGNMENT),
+            "StagingBelt::write_buffer() offset {offset} must be a multiple of `COPY_BUFFER_ALIGNMENT`"
+        );
+
         let slice_of_belt = self.allocate(
             size,
             const { BufferSize::new(crate::COPY_BUFFER_ALIGNMENT).unwrap() },
-            device,
         );
         encoder.copy_buffer_to_buffer(
             slice_of_belt.buffer(),
@@ -95,12 +160,15 @@ impl StagingBelt {
 
     /// Allocate a staging belt slice with the given `size` and `alignment` and return it.
     ///
+    /// `size` must be a multiple of [`COPY_BUFFER_ALIGNMENT`]
+    /// (as is required by the underlying buffer operations).
+    ///
     /// To use this slice, call [`BufferSlice::get_mapped_range_mut()`] and write your data into
     /// that [`BufferViewMut`].
     /// (The view must be dropped before [`StagingBelt::finish()`] is called.)
     ///
     /// You can then record your own GPU commands to perform with the slice,
-    /// such as copying it to a texture or executing a compute shader that reads it (whereas
+    /// such as copying it to a texture (whereas
     /// [`StagingBelt::write_buffer()`] can only write to other buffers).
     /// All commands involving this slice must be submitted after
     /// [`StagingBelt::finish()`] is called and before [`StagingBelt::recall()`] is called.
@@ -112,12 +180,12 @@ impl StagingBelt {
     /// The chosen slice will be positioned within the buffer at a multiple of `alignment`,
     /// which may be used to meet alignment requirements for the operation you wish to perform
     /// with the slice. This does not necessarily affect the alignment of the [`BufferViewMut`].
-    pub fn allocate(
-        &mut self,
-        size: BufferSize,
-        alignment: BufferSize,
-        device: &Device,
-    ) -> BufferSlice<'_> {
+    #[track_caller]
+    pub fn allocate(&mut self, size: BufferSize, alignment: BufferSize) -> BufferSlice<'_> {
+        assert!(
+            size.get().is_multiple_of(COPY_BUFFER_ALIGNMENT),
+            "StagingBelt allocation size {size} must be a multiple of `COPY_BUFFER_ALIGNMENT`"
+        );
         assert!(
             alignment.get().is_power_of_two(),
             "alignment must be a power of two, not {alignment}"
@@ -142,10 +210,10 @@ impl StagingBelt {
                 self.free_chunks.swap_remove(index)
             } else {
                 Chunk {
-                    buffer: device.create_buffer(&BufferDescriptor {
+                    buffer: self.device.create_buffer(&BufferDescriptor {
                         label: Some("(wgpu internal) StagingBelt staging buffer"),
                         size: self.chunk_size.max(size.get()),
-                        usage: BufferUsages::MAP_WRITE | BufferUsages::COPY_SRC,
+                        usage: self.buffer_usages,
                         mapped_at_creation: true,
                     }),
                     offset: 0,
@@ -210,11 +278,23 @@ impl StagingBelt {
 
 impl fmt::Debug for StagingBelt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self {
+            device,
+            chunk_size,
+            buffer_usages,
+            active_chunks,
+            closed_chunks,
+            free_chunks,
+            sender: _,
+            receiver: _,
+        } = self;
         f.debug_struct("StagingBelt")
-            .field("chunk_size", &self.chunk_size)
-            .field("active_chunks", &self.active_chunks.len())
-            .field("closed_chunks", &self.closed_chunks.len())
-            .field("free_chunks", &self.free_chunks.len())
+            .field("device", device)
+            .field("chunk_size", chunk_size)
+            .field("buffer_usages", buffer_usages)
+            .field("active_chunks", &active_chunks.len())
+            .field("closed_chunks", &closed_chunks.len())
+            .field("free_chunks", &free_chunks.len())
             .finish_non_exhaustive()
     }
 }

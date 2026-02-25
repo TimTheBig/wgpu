@@ -1,7 +1,7 @@
 use alloc::{boxed::Box, string::String, sync::Arc, vec};
 #[cfg(wgpu_core)]
 use core::ops::Deref;
-use core::{error, fmt, future::Future};
+use core::{error, fmt, future::Future, marker::PhantomData};
 
 use crate::api::blas::{Blas, BlasGeometrySizeDescriptors, CreateBlasDescriptor};
 use crate::api::tlas::{CreateTlasDescriptor, Tlas};
@@ -58,9 +58,9 @@ impl Device {
         use core::future::Future as _;
         use core::pin::pin;
         use core::task;
-        let ctx = &mut task::Context::from_waker(waker::noop_waker_ref());
+        let ctx = &mut task::Context::from_waker(task::Waker::noop());
 
-        let instance = Instance::new(&InstanceDescriptor {
+        let instance = Instance::new(InstanceDescriptor {
             backends: Backends::NOOP,
             backend_options: BackendOptions {
                 noop: NoopBackendOptions { enable: true },
@@ -96,8 +96,10 @@ impl Device {
         self.inner.poll(poll_type.map_index(|s| s.index))
     }
 
-    /// The features which can be used on this device.
+    /// The [features][Features] which can be used on this device.
     ///
+    /// This will be equal to the [`required_features`][DeviceDescriptor::required_features]
+    /// specified when creating the device.
     /// No additional features can be used, even if the underlying adapter can support them.
     #[must_use]
     pub fn features(&self) -> Features {
@@ -106,10 +108,17 @@ impl Device {
 
     /// The limits which can be used on this device.
     ///
+    /// This will be equal to the [`required_limits`][DeviceDescriptor::required_limits]
+    /// specified when creating the device.
     /// No better limits can be used, even if the underlying adapter can support them.
     #[must_use]
     pub fn limits(&self) -> Limits {
         self.inner.limits()
+    }
+
+    /// Get info about the adapter that this device was created from.
+    pub fn adapter_info(&self) -> AdapterInfo {
+        self.inner.adapter_info()
     }
 
     /// Creates a shader module.
@@ -165,10 +174,9 @@ impl Device {
     /// thus it's the caller responsibility to pass a shader which doesn't perform any of this
     /// operations.
     ///
-    /// See the documentation for [`ShaderRuntimeChecks`][src] for more information about specific checks.
+    /// See the documentation for [`ShaderRuntimeChecks`] for more information about specific checks.
     ///
     /// [csm]: Self::create_shader_module
-    /// [src]: crate::ShaderRuntimeChecks
     #[must_use]
     pub unsafe fn create_shader_module_trusted(
         &self,
@@ -215,7 +223,7 @@ impl Device {
         let encoder = self.inner.create_render_bundle_encoder(desc);
         RenderBundleEncoder {
             inner: encoder,
-            _p: core::marker::PhantomData,
+            _p: PhantomData,
         }
     }
 
@@ -302,10 +310,10 @@ impl Device {
     ///
     /// The type of `A::Texture` depends on the backend:
     ///
-    #[doc = crate::hal_type_vulkan!("Texture")]
-    #[doc = crate::hal_type_metal!("Texture")]
-    #[doc = crate::hal_type_dx12!("Texture")]
-    #[doc = crate::hal_type_gles!("Texture")]
+    #[doc = crate::macros::hal_type_vulkan!("Texture")]
+    #[doc = crate::macros::hal_type_metal!("Texture")]
+    #[doc = crate::macros::hal_type_dx12!("Texture")]
+    #[doc = crate::macros::hal_type_gles!("Texture")]
     ///
     /// # Safety
     ///
@@ -355,10 +363,10 @@ impl Device {
     ///
     /// The type of `A::Buffer` depends on the backend:
     ///
-    #[doc = crate::hal_type_vulkan!("Buffer")]
-    #[doc = crate::hal_type_metal!("Buffer")]
-    #[doc = crate::hal_type_dx12!("Buffer")]
-    #[doc = crate::hal_type_gles!("Buffer")]
+    #[doc = crate::macros::hal_type_vulkan!("Buffer")]
+    #[doc = crate::macros::hal_type_metal!("Buffer")]
+    #[doc = crate::macros::hal_type_dx12!("Buffer")]
+    #[doc = crate::macros::hal_type_gles!("Buffer")]
     ///
     /// # Safety
     ///
@@ -411,14 +419,46 @@ impl Device {
         self.inner.on_uncaptured_error(handler)
     }
 
-    /// Push an error scope.
-    pub fn push_error_scope(&self, filter: ErrorFilter) {
-        self.inner.push_error_scope(filter)
-    }
-
-    /// Pop an error scope.
-    pub fn pop_error_scope(&self) -> impl Future<Output = Option<Error>> + WasmNotSend {
-        self.inner.pop_error_scope()
+    /// Push an error scope on this device's thread-local error scope
+    /// stack. All operations on this device, or on resources created
+    /// from this device, will have their errors captured by this scope
+    /// until the scope is popped.
+    ///
+    /// Scopes must be popped in reverse order to their creation. If
+    /// a guard is dropped without being `pop()`ped, the scope will be
+    /// popped, and the captured errors will be dropped.
+    ///
+    /// Multiple error scopes may be active at one time, forming a stack.
+    /// Each error will be reported to the inner-most scope that matches
+    /// its filter.
+    ///
+    /// With the `std` feature enabled, this stack is **thread-local**.
+    /// Without, this is **global** to all threads.
+    ///
+    /// ```rust
+    /// # async move {
+    /// # let device: wgpu::Device = unreachable!();
+    /// let error_scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+    ///
+    /// // ...
+    /// // do work that may produce validation errors
+    /// // ...
+    ///
+    /// // pop the error scope and get a future for the result
+    /// let error_future = error_scope.pop();
+    ///
+    /// // await the future to get the error, if any
+    /// let error = error_future.await;
+    /// # };
+    /// ```
+    pub fn push_error_scope(&self, filter: ErrorFilter) -> ErrorScopeGuard {
+        let index = self.inner.push_error_scope(filter);
+        ErrorScopeGuard {
+            device: self.inner.clone(),
+            index,
+            popped: false,
+            _phantom: PhantomData,
+        }
     }
 
     /// Starts a capture in the attached graphics debugger.
@@ -515,10 +555,10 @@ impl Device {
     ///
     /// The returned type depends on the backend:
     ///
-    #[doc = crate::hal_type_vulkan!("Device")]
-    #[doc = crate::hal_type_metal!("Device")]
-    #[doc = crate::hal_type_dx12!("Device")]
-    #[doc = crate::hal_type_gles!("Device")]
+    #[doc = crate::macros::hal_type_vulkan!("Device")]
+    #[doc = crate::macros::hal_type_metal!("Device")]
+    #[doc = crate::macros::hal_type_dx12!("Device")]
+    #[doc = crate::macros::hal_type_gles!("Device")]
     ///
     /// # Errors
     ///
@@ -796,35 +836,42 @@ impl fmt::Display for Error {
     }
 }
 
-// Copied from [`futures::task::noop_waker`].
-// Needed until MSRV is 1.85 with `task::Waker::noop()` available
-#[cfg(feature = "noop")]
-mod waker {
-    use core::ptr::null;
-    use core::task::{RawWaker, RawWakerVTable, Waker};
+/// Guard for an error scope pushed with [`Device::push_error_scope()`].
+///
+/// Call [`pop()`] to pop the scope and get a future for the result. If
+/// the guard is dropped without being popped explicitly, the scope will still be popped,
+/// and the captured errors will be dropped.
+///
+/// This guard is neither `Send` nor `Sync`, as error scopes are handled
+/// on a per-thread basis when the `std` feature is enabled.
+///
+/// [`pop()`]: ErrorScopeGuard::pop
+#[must_use = "Error scopes must be explicitly popped to retrieve errors they catch"]
+pub struct ErrorScopeGuard {
+    device: dispatch::DispatchDevice,
+    index: u32,
+    popped: bool,
+    // Ensure the guard is !Send and !Sync
+    _phantom: PhantomData<*mut ()>,
+}
 
-    unsafe fn noop_clone(_data: *const ()) -> RawWaker {
-        noop_raw_waker()
+static_assertions::assert_not_impl_any!(ErrorScopeGuard: Send, Sync);
+
+impl ErrorScopeGuard {
+    /// Pops the error scope.
+    ///
+    /// Returns a future which resolves to the error captured by this scope, if any.
+    /// The pop takes effect immediately; the future does not need to be awaited before doing work that is outside of this error scope.
+    pub fn pop(mut self) -> impl Future<Output = Option<Error>> + WasmNotSend {
+        self.popped = true;
+        self.device.pop_error_scope(self.index)
     }
+}
 
-    unsafe fn noop(_data: *const ()) {}
-
-    const NOOP_WAKER_VTABLE: RawWakerVTable = RawWakerVTable::new(noop_clone, noop, noop, noop);
-
-    const fn noop_raw_waker() -> RawWaker {
-        RawWaker::new(null(), &NOOP_WAKER_VTABLE)
-    }
-
-    /// Get a static reference to a [`Waker`] which
-    /// does nothing when `wake()` is called on it.
-    #[inline]
-    pub fn noop_waker_ref() -> &'static Waker {
-        struct SyncRawWaker(RawWaker);
-        unsafe impl Sync for SyncRawWaker {}
-
-        static NOOP_WAKER_INSTANCE: SyncRawWaker = SyncRawWaker(noop_raw_waker());
-
-        // SAFETY: `Waker` is #[repr(transparent)] over its `RawWaker`.
-        unsafe { &*(&NOOP_WAKER_INSTANCE.0 as *const RawWaker as *const Waker) }
+impl Drop for ErrorScopeGuard {
+    fn drop(&mut self) {
+        if !self.popped {
+            drop(self.device.pop_error_scope(self.index));
+        }
     }
 }

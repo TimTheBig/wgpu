@@ -88,11 +88,19 @@ static MULTIPLE_DEVICES: GpuTestConfiguration = GpuTestConfiguration::new()
     .run_sync(|ctx| {
         use pollster::FutureExt as _;
         ctx.adapter
-            .request_device(&wgpu::DeviceDescriptor::default())
+            .request_device(&wgpu::DeviceDescriptor {
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                ..Default::default()
+            })
             .block_on()
             .expect("failed to create device");
         ctx.adapter
-            .request_device(&wgpu::DeviceDescriptor::default())
+            .request_device(&wgpu::DeviceDescriptor {
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                ..Default::default()
+            })
             .block_on()
             .expect("failed to create device");
     });
@@ -138,7 +146,7 @@ async fn request_device_error_message() {
                 max_texture_dimension_2d: u32::MAX,
                 max_texture_dimension_3d: u32::MAX,
                 max_bind_groups: u32::MAX,
-                max_push_constant_size: u32::MAX,
+                max_immediate_size: u32::MAX,
                 ..Default::default()
             },
             ..Default::default()
@@ -346,6 +354,7 @@ static DEVICE_DESTROY_THEN_MORE: GpuTestConfiguration = GpuTestConfiguration::ne
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
         drop(pass);
         ctx.queue.submit([encoder_for_render_pass.finish()]);
@@ -431,7 +440,7 @@ static DEVICE_DESTROY_THEN_MORE: GpuTestConfiguration = GpuTestConfiguration::ne
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: None,
                     bind_group_layouts: &[&invalid_bind_group_layout],
-                    push_constant_ranges: &[],
+                    immediate_size: 0,
                 });
 
         let _ = ctx
@@ -458,7 +467,7 @@ static DEVICE_DESTROY_THEN_MORE: GpuTestConfiguration = GpuTestConfiguration::ne
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
                 fragment: None,
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             });
 
@@ -616,7 +625,7 @@ static DIFFERENT_BGL_ORDER_BW_SHADER_AND_API: GpuTestConfiguration = GpuTestConf
                 primitive: wgpu::PrimitiveState::default(),
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             });
 

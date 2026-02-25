@@ -44,8 +44,6 @@ static COMPUTE_PIPELINE_DEFAULT_LAYOUT_BAD_MODULE: GpuTestConfiguration =
     GpuTestConfiguration::new()
         .parameters(TestParameters::default().enable_noop())
         .run_sync(|ctx| {
-            ctx.device.push_error_scope(wgpu::ErrorFilter::Validation);
-
             fail(
                 &ctx.device,
                 || {
@@ -78,8 +76,6 @@ static COMPUTE_PIPELINE_DEFAULT_LAYOUT_BAD_BGL_INDEX: GpuTestConfiguration =
                 .enable_noop(),
         )
         .run_sync(|ctx| {
-            ctx.device.push_error_scope(wgpu::ErrorFilter::Validation);
-
             fail(
                 &ctx.device,
                 || {
@@ -107,8 +103,6 @@ static RENDER_PIPELINE_DEFAULT_LAYOUT_BAD_MODULE: GpuTestConfiguration =
     GpuTestConfiguration::new()
         .parameters(TestParameters::default().enable_noop())
         .run_sync(|ctx| {
-            ctx.device.push_error_scope(wgpu::ErrorFilter::Validation);
-
             fail(
                 &ctx.device,
                 || {
@@ -129,7 +123,7 @@ static RENDER_PIPELINE_DEFAULT_LAYOUT_BAD_MODULE: GpuTestConfiguration =
                                 depth_stencil: None,
                                 multisample: Default::default(),
                                 fragment: None,
-                                multiview: None,
+                                multiview_mask: None,
                                 cache: None,
                             });
 
@@ -148,8 +142,6 @@ static RENDER_PIPELINE_DEFAULT_LAYOUT_BAD_BGL_INDEX: GpuTestConfiguration =
                 .enable_noop(),
         )
         .run_sync(|ctx| {
-            ctx.device.push_error_scope(wgpu::ErrorFilter::Validation);
-
             fail(
                 &ctx.device,
                 || {
@@ -182,7 +174,7 @@ static RENDER_PIPELINE_DEFAULT_LAYOUT_BAD_BGL_INDEX: GpuTestConfiguration =
                                         write_mask: wgpu::ColorWrites::ALL,
                                     })],
                                 }),
-                                multiview: None,
+                                multiview_mask: None,
                                 cache: None,
                             });
 
@@ -223,7 +215,7 @@ static NO_TARGETLESS_RENDER: GpuTestConfiguration = GpuTestConfiguration::new()
                                 ..Default::default()
                             },
                             fragment: None,
-                            multiview: None,
+                            multiview_mask: None,
                             cache: None,
                         });
                 }

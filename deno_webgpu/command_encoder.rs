@@ -2,6 +2,9 @@
 
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::num::NonZero;
+#[cfg(target_vendor = "apple")]
+use std::sync::OnceLock;
 
 use deno_core::cppgc::Ptr;
 use deno_core::op2;
@@ -18,7 +21,6 @@ use crate::command_buffer::GPUCommandBuffer;
 use crate::compute_pass::GPUComputePassEncoder;
 use crate::error::GPUGenericError;
 use crate::queue::GPUTexelCopyTextureInfo;
-use crate::render_pass::GPULoadOp;
 use crate::render_pass::GPURenderPassEncoder;
 use crate::webidl::GPUExtent3D;
 use crate::Instance;
@@ -29,6 +31,11 @@ pub struct GPUCommandEncoder {
 
   pub id: wgpu_core::id::CommandEncoderId,
   pub label: String,
+
+  // Weak reference to the JS object so we can attach a finalizer.
+  // See `GPUDevice::create_command_encoder`.
+  #[cfg(target_vendor = "apple")]
+  pub(crate) weak: OnceLock<v8::Weak<v8::Object>>,
 }
 
 impl Drop for GPUCommandEncoder {
@@ -90,39 +97,26 @@ impl GPUCommandEncoder {
         .collect::<Vec<_>>(),
     );
 
-    let depth_stencil_attachment = descriptor
-            .depth_stencil_attachment
-            .map(|attachment| {
-                if attachment
-                    .depth_load_op
-                    .as_ref()
-                    .is_some_and(|op| matches!(op, GPULoadOp::Clear))
-                    && attachment.depth_clear_value.is_none()
-                {
-                    return Err(JsErrorBox::type_error(
-                        r#"'depthClearValue' must be specified when 'depthLoadOp' is "clear""#,
-                    ));
-                }
-
-                Ok(wgpu_core::command::RenderPassDepthStencilAttachment {
-                    view: attachment.view.to_view_id(),
-                    depth: PassChannel {
-                        load_op: attachment
-                            .depth_load_op
-                            .map(|load_op| load_op.with_value(attachment.depth_clear_value)),
-                        store_op: attachment.depth_store_op.map(Into::into),
-                        read_only: attachment.depth_read_only,
-                    },
-                    stencil: PassChannel {
-                        load_op: attachment.stencil_load_op.map(|load_op| {
-                            load_op.with_value(Some(attachment.stencil_clear_value))
-                        }),
-                        store_op: attachment.stencil_store_op.map(Into::into),
-                        read_only: attachment.stencil_read_only,
-                    },
-                })
-            })
-            .transpose()?;
+    let depth_stencil_attachment =
+      descriptor.depth_stencil_attachment.map(|attachment| {
+        wgpu_core::command::RenderPassDepthStencilAttachment {
+          view: attachment.view.to_view_id(),
+          depth: PassChannel {
+            load_op: attachment
+              .depth_load_op
+              .map(|load_op| load_op.with_value(attachment.depth_clear_value)),
+            store_op: attachment.depth_store_op.map(Into::into),
+            read_only: attachment.depth_read_only,
+          },
+          stencil: PassChannel {
+            load_op: attachment.stencil_load_op.map(|load_op| {
+              load_op.with_value(Some(attachment.stencil_clear_value))
+            }),
+            store_op: attachment.stencil_store_op.map(Into::into),
+            read_only: attachment.stencil_read_only,
+          },
+        }
+      });
 
     let timestamp_writes =
       descriptor.timestamp_writes.map(|timestamp_writes| {
@@ -142,6 +136,7 @@ impl GPUCommandEncoder {
       occlusion_query_set: descriptor
         .occlusion_query_set
         .map(|query_set| query_set.id),
+      multiview_mask: NonZero::new(descriptor.multiview_mask),
     };
 
     let (render_pass, err) = self
@@ -437,12 +432,14 @@ impl GPUCommandEncoder {
       label: crate::transform_label(descriptor.label.clone()),
     };
 
-    let (id, err) =
+    let (id, opt_label_and_err) =
       self
         .instance
         .command_encoder_finish(self.id, &wgpu_descriptor, None);
 
-    self.error_handler.push_error(err);
+    self
+      .error_handler
+      .push_error(opt_label_and_err.map(|(_label, err)| err));
 
     GPUCommandBuffer {
       instance: self.instance.clone(),

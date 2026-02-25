@@ -11,19 +11,36 @@ fn check_targets(input: &Input, module: &mut naga::Module, source_code: Option<&
 
     let targets = params.targets.unwrap();
 
-    let (capabilities, subgroup_stages, subgroup_operations) = if params.god_mode {
-        (
-            naga::valid::Capabilities::all(),
-            naga::valid::ShaderStages::all(),
-            naga::valid::SubgroupOperationSet::all(),
-        )
-    } else {
-        (
-            naga::valid::Capabilities::default(),
-            naga::valid::ShaderStages::empty(),
-            naga::valid::SubgroupOperationSet::empty(),
-        )
-    };
+    let mut capabilities = params.capabilities.unwrap_or_default();
+    {
+        let mut allowed_capabilities = naga::valid::Capabilities::all();
+        if targets.contains(Targets::GLSL) {
+            allowed_capabilities &= naga::back::glsl::supported_capabilities();
+        }
+        if targets.contains(Targets::HLSL) {
+            allowed_capabilities &= naga::back::hlsl::supported_capabilities();
+        }
+        if targets.contains(Targets::SPIRV) {
+            allowed_capabilities &= naga::back::spv::supported_capabilities();
+        }
+        if targets.contains(Targets::WGSL) {
+            allowed_capabilities &= naga::back::wgsl::supported_capabilities();
+        }
+        if targets.contains(Targets::METAL) {
+            allowed_capabilities &= naga::back::msl::supported_capabilities();
+        }
+        if capabilities == naga::valid::Capabilities::all() {
+            capabilities = allowed_capabilities;
+        } else {
+            let diff = capabilities - allowed_capabilities;
+            if !diff.is_empty() {
+                panic!(
+                    "Invalid capabilities for backends on shader {name}: used {diff:?} which aren't supported by one of the targets.
+Note: this is an issue with snapshot configuration, not code. If you added a new capability, add it to `supported_capabilities()` in each backend where it is supported"
+                );
+            }
+        }
+    }
 
     {
         if targets.contains(Targets::IR) {
@@ -40,8 +57,6 @@ fn check_targets(input: &Input, module: &mut naga::Module, source_code: Option<&
     };
 
     let info = naga::valid::Validator::new(validation_flags, capabilities)
-        .subgroup_stages(subgroup_stages)
-        .subgroup_operations(subgroup_operations)
         .validate(module)
         .unwrap_or_else(|err| {
             panic!("Naga module validation failed on test `{name}`:\n{err:?}");
@@ -65,12 +80,16 @@ fn check_targets(input: &Input, module: &mut naga::Module, source_code: Option<&
         }
 
         naga::valid::Validator::new(validation_flags, capabilities)
-            .subgroup_stages(subgroup_stages)
-            .subgroup_operations(subgroup_operations)
             .validate(module)
             .unwrap_or_else(|err| {
                 panic!("Post-compaction module validation failed on test '{name}':\n<{err:?}")
             })
+    };
+
+    let shared_info = WriterSharedOptions {
+        mesh_output_validation: params.mesh_output_validation,
+        task_limits: params.task_limits,
+        bounds_checks_policies: params.bounds_check_policies,
     };
 
     {
@@ -100,8 +119,8 @@ fn check_targets(input: &Input, module: &mut naga::Module, source_code: Option<&
             &info,
             debug_info,
             &params.spv,
-            params.bounds_check_policies,
             &params.pipeline_constants,
+            &shared_info,
         );
     }
 
@@ -185,12 +204,12 @@ fn write_output_spv(
     info: &naga::valid::ModuleInfo,
     debug_info: Option<naga::back::spv::DebugInfo>,
     params: &SpirvOutParameters,
-    bounds_check_policies: naga::proc::BoundsCheckPolicies,
     pipeline_constants: &naga::back::PipelineConstants,
+    shared_options: &WriterSharedOptions,
 ) {
     use naga::back::spv;
 
-    let options = params.to_options(bounds_check_policies, debug_info);
+    let options = params.to_options(shared_options, debug_info);
 
     let (module, info) =
         naga::back::pipeline_constants::process_overrides(module, info, None, pipeline_constants)
@@ -269,7 +288,7 @@ fn write_output_msl(
         }
     }
 
-    input.write_output_file("msl", "msl", string, DIR_OUT);
+    input.write_output_file("msl", "metal", string, DIR_OUT);
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -351,7 +370,12 @@ fn write_output_hlsl(
             naga::ShaderStage::Vertex => &mut config.vertex,
             naga::ShaderStage::Fragment => &mut config.fragment,
             naga::ShaderStage::Compute => &mut config.compute,
-            naga::ShaderStage::Task | naga::ShaderStage::Mesh => unreachable!(),
+            naga::ShaderStage::Task
+            | naga::ShaderStage::Mesh
+            | naga::ShaderStage::RayGeneration
+            | naga::ShaderStage::AnyHit
+            | naga::ShaderStage::ClosestHit
+            | naga::ShaderStage::Miss => unreachable!(),
         }
         .push(hlsl_snapshots::ConfigItem {
             entry_point: name.clone(),
@@ -459,7 +483,6 @@ fn convert_snapshots_spv() {
 // While we _can_ run this test under miri, it is extremely slow (>5 minutes),
 // and naga isn't the primary target for miri testing, so we disable it.
 #[cfg_attr(miri, ignore)]
-#[allow(unused_variables)]
 #[test]
 fn convert_snapshots_glsl() {
     let _ = env_logger::try_init();

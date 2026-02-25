@@ -77,6 +77,14 @@ where
 
 #[derive(Default, serde::Deserialize)]
 #[serde(default)]
+pub struct WriterSharedOptions {
+    pub mesh_output_validation: bool,
+    pub task_limits: Option<naga::back::TaskDispatchLimits>,
+    pub bounds_checks_policies: naga::proc::BoundsCheckPolicies,
+}
+
+#[derive(Default, serde::Deserialize)]
+#[serde(default)]
 pub struct WgslInParameters {
     pub parse_doc_comments: bool,
 }
@@ -84,6 +92,7 @@ impl From<&WgslInParameters> for naga::front::wgsl::Options {
     fn from(value: &WgslInParameters) -> Self {
         Self {
             parse_doc_comments: value.parse_doc_comments,
+            capabilities: naga::valid::Capabilities::all(),
         }
     }
 }
@@ -114,6 +123,7 @@ pub struct SpirvOutParameters {
     pub separate_entry_points: bool,
     #[serde(deserialize_with = "deserialize_binding_map")]
     pub binding_map: naga::back::spv::BindingMap,
+    pub ray_query_initialization_tracking: bool,
     pub use_storage_input_output_16: bool,
     pub emit_debug_printf: bool,
 }
@@ -127,6 +137,7 @@ impl Default for SpirvOutParameters {
             force_point_size: false,
             clamp_frag_depth: false,
             separate_entry_points: false,
+            ray_query_initialization_tracking: true,
             use_storage_input_output_16: true,
             binding_map: naga::back::spv::BindingMap::default(),
             emit_debug_printf: false,
@@ -136,7 +147,7 @@ impl Default for SpirvOutParameters {
 impl SpirvOutParameters {
     pub fn to_options<'a>(
         &'a self,
-        bounds_check_policies: naga::proc::BoundsCheckPolicies,
+        shared_info: &WriterSharedOptions,
         debug_info: Option<naga::back::spv::DebugInfo<'a>>,
     ) -> naga::back::spv::Options<'a> {
         use naga::back::spv;
@@ -165,14 +176,21 @@ impl SpirvOutParameters {
         naga::back::spv::Options {
             lang_version: (self.version.0, self.version.1),
             flags,
-            capabilities,
-            bounds_check_policies,
+            capabilities: if self.capabilities.is_empty() {
+                None
+            } else {
+                Some(self.capabilities.clone())
+            },
+            bounds_check_policies: shared_info.bounds_checks_policies,
             fake_missing_bindings: true,
             binding_map: self.binding_map.clone(),
             zero_initialize_workgroup_memory: spv::ZeroInitializeWorkgroupMemoryMode::Polyfill,
             force_loop_bounding: true,
+            ray_query_initialization_tracking: true,
             debug_info,
             use_storage_input_output_16: self.use_storage_input_output_16,
+            task_dispatch_limits: shared_info.task_limits,
+            mesh_shader_primitive_indices_clamp: shared_info.mesh_output_validation,
         }
     }
 }
@@ -200,8 +218,10 @@ pub struct FragmentModule {
 #[derive(Default, serde::Deserialize)]
 #[serde(default)]
 pub struct Parameters {
-    // -- GOD MODE --
-    pub god_mode: bool,
+    // -- validation options --
+    //
+    // Capabilities to enable. Defaults to `Capabilities::default()`.
+    pub capabilities: Option<naga::valid::Capabilities>,
 
     // -- wgsl-in options --
     #[serde(rename = "wgsl-in")]
@@ -242,6 +262,17 @@ pub struct Parameters {
 
     pub bounds_check_policies: naga::proc::BoundsCheckPolicies,
     pub pipeline_constants: naga::back::PipelineConstants,
+
+    pub mesh_output_validation: bool,
+    #[serde(default = "default_task_limits")]
+    pub task_limits: Option<naga::back::TaskDispatchLimits>,
+}
+
+fn default_task_limits() -> Option<naga::back::TaskDispatchLimits> {
+    Some(naga::back::TaskDispatchLimits {
+        max_mesh_workgroups_per_dim: 256,
+        max_mesh_workgroups_total: 1024,
+    })
 }
 
 /// Information about a shader input file.
