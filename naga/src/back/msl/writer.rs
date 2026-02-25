@@ -4061,6 +4061,12 @@ impl<W: Write> Writer<W> {
                     }
                 }
                 crate::Statement::DebugPrintf { .. } => {
+                    // metal doesn't have a debug printf implementation yet,
+                    // todo add one, see: https://developer.apple.com/documentation/metal/logging-shader-debug-messages
+
+                    // Shader logging is only available in Metal 3.2 and later.
+                    // and requires you to add -fmetal-enable-logging as a compile flag
+                    // use metal::os_log_default.log_debug()
                 }
                 crate::Statement::SubgroupBallot { result, predicate } => {
                     write!(self.out, "{level}")?;
