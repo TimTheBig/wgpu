@@ -1152,6 +1152,100 @@ fn test_template_list() {
 }
 
 #[test]
+fn test_string() {
+    sub_test(
+        "\"hello timy\"",
+        &[
+            Token::String("hello timy")
+        ],
+    );
+    sub_test(
+        "\"<5%,\"",
+        &[
+            Token::String("<5%,")
+        ],
+    );
+    sub_test(
+        "\"1\"\"2\"",
+        &[
+            Token::String("1"),
+            Token::String("2"),
+        ],
+    );
+    sub_test(
+        "\"webgl > wgpu\", 1u",
+        &[
+            Token::String("webgl > wgpu"),
+            Token::Separator(','),
+            Token::Number(Ok(Number::U32(1))),
+        ],
+    );
+    sub_test(
+        "\"cuda > wgpu %d\", 1.0",
+        &[
+            Token::String("cuda > wgpu %d"),
+            Token::Separator(','),
+            Token::Number(Ok(Number::AbstractFloat(1.0))),
+        ],
+    );
+    sub_test(
+        "(\"rocm > wgpu %d\", 1u)",
+        &[
+            Token::Paren('('),
+            Token::String("rocm > wgpu %d"),
+            Token::Separator(','),
+            Token::Number(Ok(Number::U32(1))),
+            Token::Paren(')'),
+        ],
+    );
+    sub_test(
+        "debugPrintf(\"and yet wgpu if number %d\", 1i);",
+        &[
+            Token::Word("debugPrintf"),
+            Token::Paren('('),
+            Token::String("and yet wgpu if number %d"),
+            Token::Separator(','),
+            Token::Number(Ok(Number::I32(1))),
+            Token::Paren(')'),
+            Token::Separator(';'),
+        ],
+    );
+    sub_test(
+        r#"@compute @workgroup_size(8,8,1)
+        fn main() {
+            debugPrintf("Hello world %d", 1);
+        }"#, &[
+            Token::Attribute,
+            Token::Word("compute"),
+            Token::Attribute,
+            Token::Word("workgroup_size"),
+            Token::Paren('('),
+            Token::Number(Ok(Number::AbstractInt(8))),
+            Token::Separator(','),
+            Token::Number(Ok(Number::AbstractInt(8))),
+            Token::Separator(','),
+            Token::Number(Ok(Number::AbstractInt(1))),
+            Token::Paren(')'),
+            Token::Word("fn"),
+            Token::Word("main"),
+            Token::Paren('('),
+            Token::Paren(')'),
+            Token::Paren('{'),
+
+            Token::Word("debugPrintf"),
+            Token::Paren('('),
+            Token::String("Hello world %d"),
+            Token::Separator(','),
+            Token::Number(Ok(Number::AbstractInt(1))),
+            Token::Paren(')'),
+            Token::Separator(';'),
+
+            Token::Paren('}'),
+        ],
+    );
+}
+
+#[test]
 fn test_comments() {
     sub_test("// Single comment", &[]);
 

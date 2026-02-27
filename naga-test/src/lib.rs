@@ -176,11 +176,7 @@ impl SpirvOutParameters {
         naga::back::spv::Options {
             lang_version: (self.version.0, self.version.1),
             flags,
-            capabilities: if self.capabilities.is_empty() {
-                None
-            } else {
-                Some(self.capabilities.clone())
-            },
+            capabilities,
             bounds_check_policies: shared_info.bounds_checks_policies,
             fake_missing_bindings: true,
             binding_map: self.binding_map.clone(),
