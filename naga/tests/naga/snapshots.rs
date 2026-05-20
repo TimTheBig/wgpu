@@ -404,12 +404,6 @@ fn write_output_wgsl(
 
     println!("generating WGSL");
 
-    let mut flags = wgsl::WriterFlags::empty();
-    flags.set(wgsl::WriterFlags::EXPLICIT_TYPES, params.explicit_types);
-    flags.set(
-        wgsl::WriterFlags::EMIT_DEBUG_PRINTF,
-        params.emit_debug_printf,
-    );
     let string = wgsl::write_string(module, info, params.into()).expect("WGSL write failed");
 
     input.write_output_file("wgsl", "wgsl", string, DIR_OUT);

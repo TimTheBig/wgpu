@@ -220,12 +220,9 @@ An override expression can be evaluated at pipeline creation time.
 */
 
 mod block;
-mod printf;
+pub(crate) mod printf;
 pub use printf::PrintfString;
-pub(crate) use printf::{
-    ConversionType, FormatElement, PrintfParseError, PrintfParseErrorKind,
-    PrecisionParam, ConversionSpecifier, VALID_FORMAT_SPECIFIER,
-};
+pub(crate) use printf::{PrintfParseError, PrintfParseErrorKind, VALID_FORMAT_SPECIFIER};
 
 use alloc::{boxed::Box, string::String, vec::Vec};
 

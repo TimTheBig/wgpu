@@ -354,11 +354,6 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
         s = &s[1..];
     }
 
-    // If precision was not specified, set defaults: 6
-    if spec.precision == PrecisionParam::FromArgument {
-        spec.precision = PrecisionParam::Literal(6);
-    }
-
     Ok((spec, s))
 }
 

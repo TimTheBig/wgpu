@@ -1698,18 +1698,41 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                             self.next()?;
                         }
                         continue;
-                    } else if Some(set_id) != self.ext_glsl_id {
+                    }
+
+                    let ext_name = if let Some(name) = self.ext_inst_imports.get(&set_id) {
+                        *name
+                    } else {
+                        return Err(Error::InvalidExtInst(set_id));
+                    };
+
+                    if ext_name == "NonSemantic.DebugPrintf" {
+                        let inst_id = self.next()?;
+                        if inst_id != 1 {
+                            return Err(Error::UnsupportedExtInst(inst_id, ext_name));
+                        }
+                        let format_id = self.next()?;
+                        let format = self.strings.lookup(format_id)?.clone();
+                        block.extend(emitter.finish(ctx.expressions));
+                        let mut arguments =
+                            Vec::with_capacity(inst.wc as usize - (base_wc as usize + 1));
+                        for _ in 0..arguments.capacity() {
+                            let arg_id = self.next()?;
+                            let lexp = self.lookup_expression.lookup(arg_id)?;
+                            arguments.push(get_expr_handle!(arg_id, lexp));
+                        }
+                        block.push(crate::Statement::DebugPrintf {
+                            format: crate::front::spv::convert::parse_printf_string_spv(format)?,
+                            arguments,
+                        }, span);
+                        emitter.start(ctx.expressions);
+                        continue;
+                    }
+
+                    if ext_name != "GLSL.std.450" {
                         return Err(Error::UnsupportedExtInstSet(set_id));
                     }
                     let inst_id = self.next()?;
-
-                    let ext_name = if let Some(name) = self.ext_inst_imports.get(&set_id) {
-                        name
-                    } else {
-                        // We get here only if the set_id doesn't point to an earlier OpExtInstImport.
-                        // If the earlier ExtInstSet was unsupported we would have emitted an error then.
-                        return Err(Error::InvalidExtInst(set_id));
-                    };
 
                     let gl_op = Glo::from_u32(inst_id).ok_or(Error::UnsupportedExtInst(inst_id, ext_name))?;
 

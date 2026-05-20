@@ -201,6 +201,7 @@ impl From<&WgslOutParameters> for naga::back::wgsl::WriterFlags {
     fn from(value: &WgslOutParameters) -> Self {
         let mut flags = Self::empty();
         flags.set(Self::EXPLICIT_TYPES, value.explicit_types);
+        flags.set(Self::EMIT_DEBUG_PRINTF, value.emit_debug_printf);
         flags
     }
 }

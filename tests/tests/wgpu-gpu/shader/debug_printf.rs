@@ -1,22 +1,23 @@
 use wgpu::{
-    include_wgsl, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipelineDescriptor,
-    Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType,
+    Backends, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipelineDescriptor, Features, Limits, PipelineCompilationOptions, PipelineLayoutDescriptor, PollType, include_wgsl
 };
 
-use wgpu_test::{gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+use wgpu_test::{FailureCase, GpuTestConfiguration, GpuTestInitializer, TestParameters, gpu_test};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(DEBUG_PRINTF);
 }
 
 #[gpu_test]
-static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
+pub static DEBUG_PRINTF: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
             .features(Features::DEBUG_PRINTF)
             .limits(Limits::default())
             // fxc is the only DX compiler with printf support
-            .force_fxc(true),
+            .force_fxc(true)
+            // only supported on VK for now, Metal support is next
+            .skip(FailureCase::backend(Backends::METAL | Backends::DX12)),
     )
     .run_sync(|ctx| {
         // SAFETY: WGPU tests are run one at a time

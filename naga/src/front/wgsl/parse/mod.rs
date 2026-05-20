@@ -447,11 +447,9 @@ impl Parser {
                 ast::Expression::Literal(ast::Literal::Number(num))
             }
             (Token::String(string), _) => {
-                let _ = lexer.next();
                 ast::Expression::Literal(ast::Literal::String(string))
             }
             (Token::Word("RAY_FLAG_NONE"), _) => {
-                let _ = lexer.next();
                 literal_ray_flag(crate::RayFlag::empty())
             }
             (Token::Word("RAY_FLAG_FORCE_OPAQUE"), _) => {
@@ -2386,4 +2384,39 @@ impl Parser {
 
 const fn is_start_of_compound_statement<'a>(token: Token<'a>) -> bool {
     matches!(token, Token::Attribute | Token::Paren('{'))
+}
+
+#[cfg(test)]
+#[track_caller]
+fn parse_args_sub_test(source: &str) {
+    let mut lexer = Lexer::new(source, true);
+    let mut ctx = ExpressionContext {
+        expressions: &mut Default::default(),
+        local_table: &mut Default::default(),
+        locals: &mut Default::default(),
+        unresolved: &mut Default::default(),
+    };
+    if let Err(e) = Parser::new().arguments(&mut lexer, &mut ctx) {
+        panic!("{}", e.as_parse_error(source).emit_to_string(source));
+    }
+}
+
+#[test]
+fn test_arguments() {
+    parse_args_sub_test("(2, 1)");
+    parse_args_sub_test("(2, \"1\")");
+    parse_args_sub_test("(\"Hello world %d\", 1)");
+}
+
+#[test]
+fn test_printf() {
+    let source: &str = r#"const twelve = 12;
+    @compute @workgroup_size(8,8,1)
+    fn main() {
+        debugPrintf("Hello world %d", 1);
+        debugPrintf("12 == %i", twelve);
+    }"#;
+    if let Err(e) = Parser::new().parse(source, &Options::new()) {
+        panic!("{}", e.as_parse_error(source).emit_to_string(source));
+    }
 }

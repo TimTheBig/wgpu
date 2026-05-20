@@ -29,7 +29,6 @@ This value then gets used instead of `OpLoad` result later on.
 
 mod convert;
 mod error;
-mod ext_inst;
 mod function;
 mod image;
 mod next_block;
@@ -103,7 +102,11 @@ pub const SUPPORTED_EXTENSIONS: &[&str] = &[
     "SPV_KHR_non_semantic_info",
     "SPV_KHR_fragment_shader_barycentric",
 ];
-pub const SUPPORTED_EXT_SETS: &[&str] = &["GLSL.std.450", "NonSemantic.DebugPrintf"];
+pub const SUPPORTED_EXT_SETS: &[&str] = &[
+    "GLSL.std.450",
+    "NonSemantic.DebugPrintf",
+    "NonSemantic.Shader.DebugInfo.100",
+];
 
 #[derive(Copy, Clone)]
 pub struct Instruction {
@@ -1896,6 +1899,13 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
         }
         if let Some(ext) = SUPPORTED_EXT_SETS.iter().find(|ext| **ext == name.as_str()) {
             self.ext_inst_imports.insert(result_id, ext);
+            match *ext {
+                "GLSL.std.450" => self.ext_glsl_id = Some(result_id),
+                "NonSemantic.Shader.DebugInfo.100" => {
+                    self.ext_non_semantic_id = Some(result_id)
+                }
+                _ => {}
+            }
         } else {
             return Err(Error::UnsupportedExtSet(name));
         }

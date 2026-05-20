@@ -1195,4 +1195,5 @@ pub fn supported_capabilities() -> crate::valid::Capabilities {
         | Caps::PER_VERTEX
         // No RAY_TRACING_PIPELINE
         | Caps::DRAW_INDEX
+        | Caps::DEBUG_PRINTF
 }
