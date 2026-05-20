@@ -1,6 +1,5 @@
 targets = "SPIRV | GLSL | HLSL | WGSL"
-
-god_mode = true
+capabilities = "DEBUG_PRINTF"
 
 [spv]
 version = [1, 1]
