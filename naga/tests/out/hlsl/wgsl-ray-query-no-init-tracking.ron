@@ -7,10 +7,12 @@
         (
             entry_point:"main",
             target_profile:"cs_6_5",
+            debug_printf:false,
         ),
         (
             entry_point:"main_candidate",
             target_profile:"cs_6_5",
+            debug_printf:false,
         ),
     ],
 )

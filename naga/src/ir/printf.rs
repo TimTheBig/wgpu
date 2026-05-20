@@ -217,7 +217,7 @@ fn parse_format_string(fmt: &str) -> Result<PrintfString, PrintfParseError> {
 }
 
 fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u32, impl Fn() -> u32)) -> Result<(ConversionSpecifier, &str), PrintfParseError> {
-    // default initializer — most flags aren't actually used in Vulkan debugPrintf,
+    // default initializer, most flags aren't actually used in Vulkan debugPrintf,
     // but we preserve fields for compatibility
     let mut spec = ConversionSpecifier {
         precision: PrecisionParam::FromArgument, // todo placeholder
@@ -236,7 +236,6 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
     // Vulkan uses precision as digits right after '%', but your original parser handled .precision.
     // We'll support BOTH: either `.N` or just `N` immediately after `%`. Prefer the digits
     // immediately after '%' if present (we're already in that context).
-    // If there was a leading '.' we already would have parsed it in the old code — keep that support.
     if matches!(s.chars().next(), Some('.')) {
         // classical form ".N"
         s = &s[1..];
@@ -324,7 +323,7 @@ fn take_conversion_specifier(s: &str, (specifier_offset, find_specifier_len): (u
             Some('x') => ConversionType::HexIntLower,
             Some('X') => ConversionType::HexIntUpper,
             Some('a') | Some('A') => {
-                // treat 'a'/'A' as floats (hex-float) — map to float family
+                // treat 'a'/'A' as floats (hex-float), map to float family
                 ConversionType::DecFloatLower
             }
             Some('e') => ConversionType::SciFloatLower,

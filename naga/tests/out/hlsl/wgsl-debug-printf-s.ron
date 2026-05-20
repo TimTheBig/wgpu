@@ -2,12 +2,12 @@
     vertex:[
     ],
     fragment:[
-        (
-            entry_point:"main",
-            target_profile:"ps_6_1",
-            debug_printf:false,
-        ),
     ],
     compute:[
+        (
+            entry_point:"main",
+            target_profile:"cs_5_1",
+            debug_printf:false,
+        ),
     ],
 )

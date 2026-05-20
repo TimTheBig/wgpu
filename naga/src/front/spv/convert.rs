@@ -188,26 +188,10 @@ pub(super) fn map_storage_class(word: spirv::Word) -> Result<super::ExtendedClas
     })
 }
 
-use crate::ir::{PrintfString, FormatElement, PrintfParseError};
-use alloc::string::{String, ToString};
+use alloc::string::String;
 
-// todo to/from string for PrintfString
-pub(crate) fn display_printf_string_spv(fmt: PrintfString) -> String {
-    // use std::fmt::Write;
-    // let mut str_out = String::new();
-
-    // for fmt_elem in &fmt.0 {
-    //     match fmt_elem {
-    //         FormatElement::Verbatim(str) => str_out.push_str(str),
-    //         // conversion_specifier fmt is infalible
-    //         FormatElement::Format(conversion_specifier) => write!(str_out, "{conversion_specifier}").unwrap(),
-    //     };
-    // }
-
-    // str_out
-    fmt.to_string()
-}
-
-pub(crate) fn parse_printf_string_spv(str: String) -> Result<PrintfString, PrintfParseError> {
+pub(crate) fn parse_printf_string_spv(
+    str: String,
+) -> Result<crate::ir::PrintfString, crate::ir::PrintfParseError> {
     str.parse()
 }
